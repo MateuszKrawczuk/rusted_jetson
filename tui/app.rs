@@ -110,46 +110,59 @@ impl TuiApp {
     }
 
     fn tick(&mut self) {
-        // Generate mock stats for now
-        let stats = self.generate_mock_stats();
+        // Collect real stats from modules
+        let stats = collect_stats();
         self.stats = Some(stats.clone());
         self.all_screen.update(stats);
         let _ = self.draw();
     }
 
-    fn generate_mock_stats(&self) -> JetsonStats {
-        use rand::Rng;
-        let mut rng = rand::thread_rng();
+    fn collect_stats(&self) -> JetsonStats {
+        // Collect stats from hardware modules
+        use crate::modules::{hardware, cpu, gpu, memory, temperature, fan, power};
 
         JetsonStats {
-            cpu: crate::CpuStats {
-                usage: rng.gen_range(20.0..80.0),
-                frequency: rng.gen_range(1000..2000),
+            cpu: SimpleCpuStats {
+                usage: cpu::CpuStats::get().usage,
+                frequency: cpu::CpuStats::get()
+                    .cores
+                    .first()
+                    .map(|c| c.frequency)
+                    .unwrap_or(0),
             },
-            gpu: crate::GpuStats {
-                usage: rng.gen_range(10.0..70.0),
-                frequency: rng.gen_range(500..1500),
+            gpu: SimpleGpuStats {
+                usage: gpu::GpuStats::get().usage,
+                frequency: gpu::GpuStats::get().frequency,
             },
-            memory: crate::MemoryStats {
-                ram_used: rng.gen_range(2048..6144),
-                ram_total: 8192,
-                swap_used: rng.gen_range(0..1024),
-                swap_total: 2048,
+            memory: {
+                let mem = memory::MemoryStats::get();
+                SimpleMemoryStats {
+                    ram_used: mem.ram_used,
+                    ram_total: mem.ram_total,
+                    swap_used: mem.swap_used,
+                    swap_total: mem.swap_total,
+                }
             },
-            fan: crate::FanStats {
-                speed: rng.gen_range(30..80),
+            fan: SimpleFanStats {
+                speed: fan::FanStats::get().speed,
             },
-            temperature: crate::TemperatureStats {
-                cpu: rng.gen_range(30.0..60.0),
-                gpu: rng.gen_range(30.0..60.0),
+            temperature: {
+                let temp = temperature::TemperatureStats::get();
+                SimpleTemperatureStats {
+                    cpu: temp.cpu,
+                    gpu: temp.gpu,
+                }
             },
-            power: crate::PowerStats {
-                total: rng.gen_range(5.0..25.0),
+            power: SimplePowerStats {
+                total: power::PowerStats::get().total,
             },
-            board: crate::BoardInfo {
-                model: "Jetson Xavier NX".to_string(),
-                jetpack: "5.1.2".to_string(),
-                l4t: "35.3.1".to_string(),
+            board: {
+                let hw = hardware::detect_board();
+                SimpleBoardInfo {
+                    model: hw.model,
+                    jetpack: hw.jetpack,
+                    l4t: hw.l4t,
+                }
             },
         }
     }

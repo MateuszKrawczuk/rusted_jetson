@@ -24,6 +24,7 @@
 
 pub mod error;
 pub mod telemetry;
+pub mod modules;
 
 #[cfg(feature = "tui")]
 pub mod tui;
@@ -32,6 +33,25 @@ pub mod tui;
 pub use telemetry::TelemetryExporter;
 
 pub use error::{Error, Result};
+
+pub use modules::{
+    cpu::CpuStats,
+    gpu::GpuStats,
+    memory::MemoryStats,
+    fan::FanStats,
+    temperature::TemperatureStats,
+    power::PowerStats,
+    hardware::BoardInfo,
+};
+
+/// Re-export simple types for TUI compatibility
+pub use CpuStats as SimpleCpuStats;
+pub use GpuStats as SimpleGpuStats;
+pub use MemoryStats as SimpleMemoryStats;
+pub use FanStats as SimpleFanStats;
+pub use TemperatureStats as SimpleTemperatureStats;
+pub use PowerStats as SimplePowerStats;
+pub use BoardInfo as SimpleBoardInfo;
 
 /// Main Jetson monitor structure
 pub struct JetsonMonitor {
@@ -64,44 +84,51 @@ pub struct JetsonStats {
     pub board: BoardInfo,
 }
 
+/// Simple CPU stats for TUI
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct CpuStats {
+pub struct SimpleCpuStats {
     pub usage: f32,
     pub frequency: u32,
 }
 
+/// Simple GPU stats for TUI
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct GpuStats {
+pub struct SimpleGpuStats {
     pub usage: f32,
     pub frequency: u32,
 }
 
+/// Simple memory stats for TUI
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct MemoryStats {
+pub struct SimpleMemoryStats {
     pub ram_used: u64,
     pub ram_total: u64,
     pub swap_used: u64,
     pub swap_total: u64,
 }
 
+/// Simple fan stats for TUI
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct FanStats {
+pub struct SimpleFanStats {
     pub speed: u8,
 }
 
+/// Simple temperature stats for TUI
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct TemperatureStats {
+pub struct SimpleTemperatureStats {
     pub cpu: f32,
     pub gpu: f32,
 }
 
+/// Simple power stats for TUI
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct PowerStats {
+pub struct SimplePowerStats {
     pub total: f32,
 }
 
+/// Simple board info for TUI
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct BoardInfo {
+pub struct SimpleBoardInfo {
     pub model: String,
     pub jetpack: String,
     pub l4t: String,

@@ -12,7 +12,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::JetsonStats;
+use crate::{JetsonStats, SimpleCpuStats, SimpleGpuStats, SimpleMemoryStats, SimpleFanStats, SimpleTemperatureStats, SimplePowerStats, SimpleBoardInfo};
 
 /// All screen - main dashboard with all stats
 pub struct AllScreen {
@@ -157,9 +157,10 @@ impl AllScreen {
         stats: &JetsonStats,
         area: Rect,
     ) {
+        let board_temp = 0.0; // TODO: Implement board temp reading
         let text = format!(
             "CPU: {:.1}°C | GPU: {:.1}°C | Board: {:.1}°C",
-            stats.temperature.cpu, stats.temperature.gpu, stats.temperature.cpu // TODO: Board temp
+            stats.temperature.cpu, stats.temperature.gpu, board_temp
         );
 
         let paragraph = Paragraph::new(text.as_str())
