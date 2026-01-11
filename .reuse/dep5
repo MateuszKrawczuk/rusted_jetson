@@ -1,0 +1,14 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: rusted-jetsons
+Upstream-Contact: Mateusz Krawczuk with work <m.krawczuk@cybrixsystems.com>
+Upstream-URL: https://github.com/mkrawczuk/rusted-jetsons
+Source: https://github.com/mkrawczuk/rusted-jetsons
+
+Files: *
+Copyright: 2026 Mateusz Krawczuk with work <m.krawczuk@cybrixsystems.com>
+License: LGPL-3.0
+
+# Zależność od jetson_stats (tylko dla referencji implementacji, nie kopiujemy kod)
+Files: docs/*
+Comment: Referenced jetson_stats (AGPL-3.0) by Raffaello Bonghi, https://github.com/rbonghi/jetson_stats
+License: LGPL-3.0

@@ -1,0 +1,27 @@
+[package.deb]
+name = "rusted-jetsons"
+maintainer = "Mateusz Krawczuk with work <m.krawczuk@cybrixsystems.com>"
+copyright = "2026 Mateusz Krawczuk with work <m.krawczuk@cybrixsystems.com>"
+license-file = ["LICENSE"]
+extended-description = """
+A Rust-based fork of jetson-stats for monitoring and controlling NVIDIA Jetson devices.
+Provides:
+- Real-time TUI with ratatui
+- OpenTelemetry exports for Grafana/Loki
+- Hardware monitoring (CPU, GPU, memory, power, temperature)
+- Control of jetson_clocks, NVP model, fan speed
+"""
+depends = "$auto"
+section = "utils"
+priority = "optional"
+assets = [
+    ["target/release/rjtop", "usr/bin/", "755"],
+    ["target/release/rjtop-cli", "usr/bin/", "755"],
+    ["README.md", "usr/share/doc/rusted-jetsons/", "644"],
+    ["LICENSE", "usr/share/doc/rusted-jetsons/", "644"],
+]
+changelog-release = true
+
+[package.metadata.deb]
+section = "utils"
+priority = "optional"

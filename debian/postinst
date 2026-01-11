@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: LGPL-3.0
+# Copyright (C) 2026 Mateusz Krawczuk with work <m.krawczuk@cybrixsystems.com>
+
+# Post-installation script for rusted-jetsons .deb package
+
+if [ -f "/usr/bin/rjtop" ]; then
+    echo "rjtop installed successfully"
+else
+    echo "Error: rjtop binary not found"
+    exit 1
+fi
