@@ -3,6 +3,9 @@
 
 # Ignore files
 /target/
+
+# Debian files are added separately
+!debian/
 Cargo.lock
 *.rs.bk
 *.pyc
