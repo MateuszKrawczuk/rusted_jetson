@@ -4,5 +4,9 @@
 //! TUI screens module
 
 pub mod all;
+pub mod control;
+pub mod info;
 
 pub use all::AllScreen;
+pub use control::ControlScreen;
+pub use info::InfoScreen;

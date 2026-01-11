@@ -17,7 +17,7 @@ use ratatui::{
 };
 
 use crate::JetsonStats;
-use crate::tui::screens::AllScreen;
+use crate::tui::screens::{AllScreen, ControlScreen, InfoScreen};
 use crate::tui::state::{ScreenState, StateMessage};
 
 /// Main TUI application
@@ -27,6 +27,8 @@ pub struct TuiApp {
     rx: mpsc::Receiver<StateMessage>,
     current_screen: ScreenState,
     all_screen: AllScreen,
+    control_screen: ControlScreen,
+    info_screen: InfoScreen,
     stats: Option<JetsonStats>,
     should_exit: bool,
     tick_rate: Duration,
@@ -51,6 +53,8 @@ impl TuiApp {
             rx,
             current_screen: ScreenState::All,
             all_screen: AllScreen::new(),
+            control_screen: ControlScreen::new(),
+            info_screen: InfoScreen::new(),
             stats: None,
             should_exit: false,
             tick_rate: Duration::from_millis(250),
@@ -113,7 +117,37 @@ impl TuiApp {
         // Collect real stats from modules
         let stats = collect_stats();
         self.stats = Some(stats.clone());
-        self.all_screen.update(stats);
+
+        // Update all screens with current stats
+        self.all_screen.update(stats.clone());
+
+        // Update control screen with control-specific stats
+        let control_stats = crate::tui::screens::ControlStats {
+            fan_speed: fan::FanStats::get().speed,
+            fan_mode: "Auto".to_string(),
+            jetson_clocks: false,
+            jetson_clocks_status: "inactive".to_string(),
+            nvpmodel_id: 0,
+            nvpmodel_name: "MAXN".to_string(),
+        };
+        self.control_screen.update(control_stats);
+
+        // Update info screen with hardware info
+        let cpu_cores = cpu::get_core_count();
+        let cpu_governor = cpu::CpuStats::get()
+            .cores
+            .first()
+            .map(|c| c.governor.clone())
+            .unwrap_or_else(|| "unknown".to_string());
+
+        let info_stats = crate::tui::screens::InfoStats {
+            board: stats.board,
+            cpu_cores,
+            cpu_governor,
+            gpu_name: "NVIDIA GPU".to_string(),
+        };
+        self.info_screen.update(info_stats);
+
         let _ = self.draw();
     }
 
@@ -222,8 +256,14 @@ impl TuiApp {
                 ScreenState::All => {
                     self.all_screen.draw(f);
                 }
+                ScreenState::Control => {
+                    self.control_screen.draw(f);
+                }
+                ScreenState::Info => {
+                    self.info_screen.draw(f);
+                }
                 _ => {
-                    // TODO: Implement other screens
+                    // TODO: Implement CPU, GPU, Memory, Power, Temperature screens
                     let text = format!("Screen: {:?} (not implemented yet)", self.current_screen);
                     let paragraph = ratatui::widgets::Paragraph::new(text.as_str())
                         .alignment(ratatui::layout::Alignment::Center)

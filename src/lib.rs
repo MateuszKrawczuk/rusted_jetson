@@ -35,7 +35,7 @@ pub use telemetry::TelemetryExporter;
 pub use error::{Error, Result};
 
 pub use modules::{
-    cpu::CpuStats,
+    cpu::{CpuStats, get_core_count},
     gpu::GpuStats,
     memory::MemoryStats,
     fan::FanStats,
