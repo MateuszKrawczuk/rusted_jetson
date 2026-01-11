@@ -24,10 +24,12 @@ anyhow = "1.0"
 thiserror = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+rand = "0.8"
 
 # TUI dependencies
 ratatui = { version = "0.26", features = ["crossterm"], optional = true }
-crossterm = { version = "0.27", features = ["event-stream"], optional = true }
+crossterm = { version = "0.27", optional = true }
+tui-input = { version = "0.10", optional = true }
 
 # OpenTelemetry dependencies
 opentelemetry = { version = "0.22", optional = true }

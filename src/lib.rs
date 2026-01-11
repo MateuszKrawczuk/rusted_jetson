@@ -25,6 +25,9 @@
 pub mod error;
 pub mod telemetry;
 
+#[cfg(feature = "tui")]
+pub mod tui;
+
 #[cfg(feature = "telemetry")]
 pub use telemetry::TelemetryExporter;
 

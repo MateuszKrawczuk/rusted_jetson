@@ -3,7 +3,6 @@
 
 //! rusted-jetsons CLI - rjtop
 
-use std::path::PathBuf;
 use clap::Parser;
 
 #[derive(Parser)]
@@ -25,8 +24,7 @@ struct Cli {
     jetson_clocks: bool,
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     if cli.stats {
@@ -34,6 +32,9 @@ async fn main() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    println!("rjtop TUI starting...");
+    // Run TUI
+    let mut app = rusted_jetsons::TuiApp::new()?;
+    app.run()?;
+
     Ok(())
 }
