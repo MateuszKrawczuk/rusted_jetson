@@ -19,3 +19,5 @@ __pycache__/
 docs/
 *.md
 !README.md
+!PLAN.md
+Readme.MD
