@@ -13,8 +13,8 @@ use ratatui::{
 };
 
 use crate::{
-    SimpleCpuStats, SimpleGpuStats, SimpleMemoryStats, SimpleFanStats,
-    SimpleTemperatureStats, SimplePowerStats, SimpleBoardInfo,
+    SimpleBoardInfo, SimpleCpuStats, SimpleFanStats, SimpleGpuStats, SimpleMemoryStats,
+    SimplePowerStats, SimpleTemperatureStats,
 };
 
 /// Info screen - hardware information
@@ -51,11 +51,7 @@ impl InfoScreen {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Info"),
-            );
+            .block(Block::default().borders(Borders::ALL).title("Info"));
         f.render_widget(paragraph, size);
     }
 
@@ -63,9 +59,9 @@ impl InfoScreen {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3),  // Header
-                Constraint::Min(0),     // Content
-                Constraint::Length(3),  // Footer
+                Constraint::Length(3), // Header
+                Constraint::Min(0),    // Content
+                Constraint::Length(3), // Footer
             ])
             .split(f.size());
 
@@ -75,21 +71,16 @@ impl InfoScreen {
     }
 
     fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
-        let header = Paragraph::new(vec![
-            Line::from(vec![
-                Span::styled(
-                    "rusted-jetsons",
-                    Style::default()
-                        .fg(Color::Green)
-                        .add_modifier(Modifier::BOLD),
-                ),
-                Span::raw(" | "),
-                Span::styled(
-                    "Info",
-                    Style::default().fg(Color::Gray),
-                ),
-            ]),
-        ])
+        let header = Paragraph::new(vec![Line::from(vec![
+            Span::styled(
+                "rusted-jetsons",
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" | "),
+            Span::styled("Info", Style::default().fg(Color::Gray)),
+        ])])
         .alignment(Alignment::Center);
         f.render_widget(header, area);
     }
@@ -98,10 +89,10 @@ impl InfoScreen {
         let body_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(15),  // Board info
-                Constraint::Length(10),  // CPU info
-                Constraint::Length(10),  // GPU info
-                Constraint::Min(0),      // Spacer
+                Constraint::Length(15), // Board info
+                Constraint::Length(10), // CPU info
+                Constraint::Length(10), // GPU info
+                Constraint::Min(0),     // Spacer
             ])
             .split(area);
 
@@ -110,16 +101,13 @@ impl InfoScreen {
         self.draw_gpu_info(f, stats, body_chunks[2]);
     }
 
-    fn draw_board_info<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &InfoStats,
-        area: Rect,
-    ) {
+    fn draw_board_info<B: Backend>(&self, f: &mut Frame<B>, stats: &InfoStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "Board Information",
-                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
             )),
             Line::from(""),
             Line::from(vec![
@@ -136,25 +124,18 @@ impl InfoScreen {
             ]),
         ];
 
-        let paragraph = Paragraph::new(text)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Board"),
-            );
+        let paragraph =
+            Paragraph::new(text).block(Block::default().borders(Borders::ALL).title("Board"));
         f.render_widget(paragraph, area);
     }
 
-    fn draw_cpu_info<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &InfoStats,
-        area: Rect,
-    ) {
+    fn draw_cpu_info<B: Backend>(&self, f: &mut Frame<B>, stats: &InfoStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "CPU Information",
-                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
             )),
             Line::from(""),
             Line::from(vec![
@@ -167,25 +148,18 @@ impl InfoScreen {
             ]),
         ];
 
-        let paragraph = Paragraph::new(text)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("CPU"),
-            );
+        let paragraph =
+            Paragraph::new(text).block(Block::default().borders(Borders::ALL).title("CPU"));
         f.render_widget(paragraph, area);
     }
 
-    fn draw_gpu_info<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &InfoStats,
-        area: Rect,
-    ) {
+    fn draw_gpu_info<B: Backend>(&self, f: &mut Frame<B>, stats: &InfoStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "GPU Information",
-                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
             )),
             Line::from(""),
             Line::from(vec![
@@ -194,12 +168,8 @@ impl InfoScreen {
             ]),
         ];
 
-        let paragraph = Paragraph::new(text)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("GPU"),
-            );
+        let paragraph =
+            Paragraph::new(text).block(Block::default().borders(Borders::ALL).title("GPU"));
         f.render_widget(paragraph, area);
     }
 

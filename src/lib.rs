@@ -24,12 +24,12 @@
 
 pub mod error;
 pub mod modules;
-// pub mod telemetry;
 
-// #[cfg(feature = "tui")]
-// pub mod tui;
+#[cfg(feature = "tui")]
+#[path = "../tui/mod.rs"]
+pub mod tui;
 
-// #[cfg(feature = "telemetry")]
-// pub use telemetry::TelemetryExporter;
+#[cfg(feature = "tui")]
+pub use tui::TuiApp;
 
 pub use error::{Error, Result};

@@ -41,7 +41,7 @@ clap = { version = "4.5", features = ["derive"] }
 tokio-test = "0.4"
 
 [features]
-default = ["tui"]
+default = []
 tui = ["ratatui", "crossterm"]
 telemetry = ["opentelemetry_sdk", "opentelemetry-otlp"]
 full = ["tui", "telemetry"]

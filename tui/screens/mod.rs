@@ -5,18 +5,19 @@
 
 pub mod all;
 pub mod control;
-pub mod cpu_screen as cpu;
-pub mod info;
+pub mod cpu_screen;
 pub mod gpu;
+pub mod info;
 pub mod memory;
 pub mod power;
 pub mod temperature;
 
 pub use all::AllScreen;
 pub use control::{ControlScreen, ControlStats};
-pub use info::{InfoScreen, InfoStats};
 pub use cpu::CpuScreen;
+pub use cpu_screen as cpu;
 pub use gpu::GpuScreen;
+pub use info::{InfoScreen, InfoStats};
 pub use memory::MemoryScreen;
 pub use power::PowerScreen;
 pub use temperature::TemperatureScreen;

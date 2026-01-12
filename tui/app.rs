@@ -7,18 +7,21 @@ use std::io;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
+use crossterm::{
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event as CEvent},
+    execute,
+};
 use ratatui::{
     backend::{Backend, CrosstermBackend},
-    crossterm::{
-        event::{self, DisableMouseCapture, EnableMouseCapture, Event as CEvent},
-        execute,
-    },
     Terminal,
 };
 
-use crate::JetsonStats;
-use crate::tui::screens::{AllScreen, ControlScreen, InfoScreen, CpuScreen};
+use crate::tui::screens::{
+    AllScreen, ControlScreen, CpuScreen, GpuScreen, InfoScreen, MemoryScreen, PowerScreen,
+    TemperatureScreen,
+};
 use crate::tui::state::{ScreenState, StateMessage};
+use crate::JetsonStats;
 
 /// Main TUI application
 pub struct TuiApp {
@@ -150,7 +153,7 @@ impl TuiApp {
             .map(|c| c.governor.clone())
             .unwrap_or_else(|| "unknown".to_string());
 
-         let info_stats = crate::tui::screens::InfoStats {
+        let info_stats = crate::tui::screens::InfoStats {
             board: stats.board,
             cpu_cores,
             cpu_governor,
@@ -165,12 +168,16 @@ impl TuiApp {
                 usage: full_cpu.usage,
                 frequency: full_cpu.cores.first().map(|c| c.frequency).unwrap_or(0),
             },
-            cores: full_cpu.cores.into_iter().map(|c| crate::tui::screens::CoreStats {
-                index: c.index,
-                usage: c.usage,
-                frequency: c.frequency,
-                governor: c.governor.clone(),
-            }).collect(),
+            cores: full_cpu
+                .cores
+                .into_iter()
+                .map(|c| crate::tui::screens::CoreStats {
+                    index: c.index,
+                    usage: c.usage,
+                    frequency: c.frequency,
+                    governor: c.governor.clone(),
+                })
+                .collect(),
             fan: SimpleFanStats {
                 speed: fan::FanStats::get().speed,
             },
@@ -216,12 +223,16 @@ impl TuiApp {
             power: SimplePowerStats {
                 total: full_power.total,
             },
-            rails: full_power.rails.into_iter().map(|r| crate::tui::screens::PowerRail {
-                name: r.name.clone(),
-                current: r.current,
-                voltage: r.voltage,
-                power: r.power,
-            }).collect(),
+            rails: full_power
+                .rails
+                .into_iter()
+                .map(|r| crate::tui::screens::PowerRail {
+                    name: r.name.clone(),
+                    current: r.current,
+                    voltage: r.voltage,
+                    power: r.power,
+                })
+                .collect(),
         };
         self.power_screen.update(power_screen_stats);
 
@@ -232,17 +243,21 @@ impl TuiApp {
                 cpu: full_temperature.cpu,
                 gpu: full_temperature.gpu,
             },
-            zones: full_temperature.thermal_zones.into_iter().map(|z| crate::tui::screens::ThermalZone {
-                name: z.name.clone(),
-                current_temp: z.current_temp,
-                max_temp: z.max_temp,
-                critical_temp: z.critical_temp,
-                usage_percent: if z.critical_temp > 0.0 {
-                    ((z.current_temp / z.critical_temp) * 100.0) as u16
-                } else {
-                    0
-                },
-            }).collect(),
+            zones: full_temperature
+                .thermal_zones
+                .into_iter()
+                .map(|z| crate::tui::screens::ThermalZone {
+                    name: z.name.clone(),
+                    current_temp: z.current_temp,
+                    max_temp: z.max_temp,
+                    critical_temp: z.critical_temp,
+                    usage_percent: if z.critical_temp > 0.0 {
+                        ((z.current_temp / z.critical_temp) * 100.0) as u16
+                    } else {
+                        0
+                    },
+                })
+                .collect(),
         };
         self.temperature_screen.update(temp_screen_stats);
 
@@ -251,7 +266,7 @@ impl TuiApp {
 
     fn collect_stats(&self) -> JetsonStats {
         // Collect stats from hardware modules
-        use crate::modules::{hardware, cpu, gpu, memory, temperature, fan, power};
+        use crate::modules::{cpu, fan, gpu, hardware, memory, power, temperature};
 
         JetsonStats {
             cpu: SimpleCpuStats {
@@ -349,57 +364,30 @@ impl TuiApp {
     }
 
     fn draw(&mut self) -> anyhow::Result<()> {
-        self.terminal.draw(|f| {
-            match self.current_screen {
-                ScreenState::All => {
-                    self.all_screen.draw(f);
-                }
-                ScreenState::Cpu => {
-                    self.cpu_screen.draw(f);
-                }
-                ScreenState::Gpu => {
-                    self.gpu_screen.draw(f);
-                }
-                ScreenState::Memory => {
-                    self.memory_screen.draw(f);
-                }
-                ScreenState::Power => {
-                    self.power_screen.draw(f);
-                }
-                ScreenState::Temperature => {
-                    self.temperature_screen.draw(f);
-                }
-                ScreenState::Control => {
-                    self.control_screen.draw(f);
-                }
-                ScreenState::Info => {
-                    self.info_screen.draw(f);
-                }
+        self.terminal.draw(|f| match self.current_screen {
+            ScreenState::All => {
+                self.all_screen.draw(f);
             }
-        })?;
-
-        self.terminal.flush()?;
-        Ok(())
-    }
-                ScreenState::Cpu => {
-                    self.cpu_screen.draw(f);
-                }
-                ScreenState::Control => {
-                    self.control_screen.draw(f);
-                }
-                ScreenState::Info => {
-                    self.info_screen.draw(f);
-                }
-                _ => {
-                    // TODO: Implement GPU, Memory, Power, Temperature screens
-                    let text = format!("Screen: {:?} (not implemented yet)", self.current_screen);
-                    let paragraph = ratatui::widgets::Paragraph::new(text.as_str())
-                        .alignment(ratatui::layout::Alignment::Center)
-                        .block(ratatui::widgets::Block::default().borders(
-                            ratatui::widgets::Borders::ALL,
-                        ));
-                    f.render_widget(paragraph, f.size());
-                }
+            ScreenState::Cpu => {
+                self.cpu_screen.draw(f);
+            }
+            ScreenState::Gpu => {
+                self.gpu_screen.draw(f);
+            }
+            ScreenState::Memory => {
+                self.memory_screen.draw(f);
+            }
+            ScreenState::Power => {
+                self.power_screen.draw(f);
+            }
+            ScreenState::Temperature => {
+                self.temperature_screen.draw(f);
+            }
+            ScreenState::Control => {
+                self.control_screen.draw(f);
+            }
+            ScreenState::Info => {
+                self.info_screen.draw(f);
             }
         })?;
 
@@ -411,10 +399,7 @@ impl TuiApp {
 impl Drop for TuiApp {
     fn drop(&mut self) {
         // Restore terminal
-        let _ = execute!(
-            io::stdout(),
-            DisableMouseCapture,
-        );
+        let _ = execute!(io::stdout(), DisableMouseCapture,);
         let _ = self.terminal.show_cursor();
     }
 }

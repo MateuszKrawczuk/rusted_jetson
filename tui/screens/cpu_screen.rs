@@ -17,11 +17,7 @@ use crate::{
     SimpleCpuStats, SimpleFanStats, SimpleTemperatureStats,
 };
 
-use crate::{
-    cpu::CpuStats,
-    fan::FanStats,
-    temperature::TemperatureStats,
-};
+use crate::{cpu::CpuStats, fan::FanStats, temperature::TemperatureStats};
 
 /// CPU screen - detailed CPU monitoring
 pub struct CpuScreen {
@@ -40,6 +36,7 @@ impl CpuScreen {
     pub fn update(&mut self, stats: CpuStats) {
         self.stats = Some(stats);
     }
+}
 
 #[derive(Debug, Clone)]
 struct CpuScreenStats {

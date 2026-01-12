@@ -12,10 +12,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::{
-    SimplePowerStats,
-    power::PowerStats as FullPowerStats,
-};
+use crate::{power::PowerStats as FullPowerStats, SimplePowerStats};
 
 /// Power screen - detailed power monitoring
 pub struct PowerScreen {
@@ -57,11 +54,7 @@ impl PowerScreen {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Power"),
-            );
+            .block(Block::default().borders(Borders::ALL).title("Power"));
         f.render_widget(paragraph, size);
     }
 
@@ -69,9 +62,9 @@ impl PowerScreen {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3),  // Header
-                Constraint::Min(0),     // Content
-                Constraint::Length(3),  // Footer
+                Constraint::Length(3), // Header
+                Constraint::Min(0),    // Content
+                Constraint::Length(3), // Footer
             ])
             .split(f.size());
 
@@ -81,36 +74,26 @@ impl PowerScreen {
     }
 
     fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
-        let header = Paragraph::new(vec![
-            Line::from(vec![
-                Span::styled(
-                    "rusted-jetsons",
-                    Style::default()
-                        .fg(Color::Green)
-                        .add_modifier(Modifier::BOLD),
-                ),
-                Span::raw(" | "),
-                Span::styled(
-                    "Power Details",
-                    Style::default().fg(Color::Gray),
-                ),
-            ]),
-        ])
+        let header = Paragraph::new(vec![Line::from(vec![
+            Span::styled(
+                "rusted-jetsons",
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" | "),
+            Span::styled("Power Details", Style::default().fg(Color::Gray)),
+        ])])
         .alignment(Alignment::Center);
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &PowerScreenStats,
-        area: Rect,
-    ) {
+    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &PowerScreenStats, area: Rect) {
         let body_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Length(20),  // Total power
-                Constraint::Min(0),       // Power rails list
+                Constraint::Length(20), // Total power
+                Constraint::Min(0),     // Power rails list
             ])
             .split(area);
 
@@ -118,71 +101,42 @@ impl PowerScreen {
         self.draw_power_rails(f, stats, body_chunks[1]);
     }
 
-    fn draw_total_power<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &PowerScreenStats,
-        area: Rect,
-    ) {
+    fn draw_total_power<B: Backend>(&self, f: &mut Frame<B>, stats: &PowerScreenStats, area: Rect) {
         let items = vec![
-            ListItem::new(format!(
-                "Total: {:.2}W",
-                stats.power.total
-            )),
+            ListItem::new(format!("Total: {:.2}W", stats.power.total)),
             ListItem::new(""),
             ListItem::new("Power usage graph not implemented yet"),
         ];
 
         let list = List::new(items)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Total Power"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("Total Power"))
             .highlight_style(Style::default().bg(Color::DarkGray))
             .highlight_symbol(">> ");
 
         f.render_widget(list, area);
     }
 
-    fn draw_power_rails<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &PowerScreenStats,
-        area: Rect,
-    ) {
+    fn draw_power_rails<B: Backend>(&self, f: &mut Frame<B>, stats: &PowerScreenStats, area: Rect) {
         let items: Vec<ListItem> = stats
             .rails
             .iter()
             .map(|rail| {
                 ListItem::new(format!(
                     "{:12} {:.2}mA {:.2}mV {:.2}mW",
-                    rail.name,
-                    rail.current,
-                    rail.voltage,
-                    rail.power
+                    rail.name, rail.current, rail.voltage, rail.power
                 ))
             })
             .collect();
 
         let list = List::new(items)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Power Rails"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("Power Rails"))
             .highlight_style(Style::default().bg(Color::DarkGray))
             .highlight_symbol(">> ");
 
         f.render_widget(list, area);
     }
 
-    fn draw_footer<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &PowerScreenStats,
-        area: Rect,
-    ) {
+    fn draw_footer<B: Backend>(&self, f: &mut Frame<B>, stats: &PowerScreenStats, area: Rect) {
         let footer_text = format!(
             "q: quit | 1-8: screens | h: help | Total: {:.2}W",
             stats.power.total

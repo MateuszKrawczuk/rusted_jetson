@@ -14,8 +14,8 @@ use ratatui::{
 };
 
 use crate::{
-    SimpleCpuStats, SimpleGpuStats, SimpleMemoryStats, SimpleFanStats,
-    SimpleTemperatureStats, SimplePowerStats, SimpleBoardInfo,
+    SimpleBoardInfo, SimpleCpuStats, SimpleFanStats, SimpleGpuStats, SimpleMemoryStats,
+    SimplePowerStats, SimpleTemperatureStats,
 };
 
 /// Control screen - hardware settings
@@ -58,11 +58,7 @@ impl ControlScreen {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Control"),
-            );
+            .block(Block::default().borders(Borders::ALL).title("Control"));
         f.render_widget(paragraph, size);
     }
 
@@ -70,9 +66,9 @@ impl ControlScreen {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3),  // Header
-                Constraint::Min(0),     // Content
-                Constraint::Length(3),  // Footer
+                Constraint::Length(3), // Header
+                Constraint::Min(0),    // Content
+                Constraint::Length(3), // Footer
             ])
             .split(f.size());
 
@@ -82,21 +78,16 @@ impl ControlScreen {
     }
 
     fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
-        let header = Paragraph::new(vec![
-            Line::from(vec![
-                Span::styled(
-                    "rusted-jetsons",
-                    Style::default()
-                        .fg(Color::Green)
-                        .add_modifier(Modifier::BOLD),
-                ),
-                Span::raw(" | "),
-                Span::styled(
-                    "Control",
-                    Style::default().fg(Color::Gray),
-                ),
-            ]),
-        ])
+        let header = Paragraph::new(vec![Line::from(vec![
+            Span::styled(
+                "rusted-jetsons",
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" | "),
+            Span::styled("Control", Style::default().fg(Color::Gray)),
+        ])])
         .alignment(Alignment::Center);
         f.render_widget(header, area);
     }

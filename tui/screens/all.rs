@@ -12,7 +12,10 @@ use ratatui::{
     Frame,
 };
 
-use crate::{JetsonStats, SimpleCpuStats, SimpleGpuStats, SimpleMemoryStats, SimpleFanStats, SimpleTemperatureStats, SimplePowerStats, SimpleBoardInfo};
+use crate::{
+    JetsonStats, SimpleBoardInfo, SimpleCpuStats, SimpleFanStats, SimpleGpuStats,
+    SimpleMemoryStats, SimplePowerStats, SimpleTemperatureStats,
+};
 
 /// All screen - main dashboard with all stats
 pub struct AllScreen {
@@ -52,9 +55,9 @@ impl AllScreen {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3),  // Header
-                Constraint::Min(0),     // Content
-                Constraint::Length(3),  // Footer
+                Constraint::Length(3), // Header
+                Constraint::Min(0),    // Content
+                Constraint::Length(3), // Footer
             ])
             .split(f.size());
 
@@ -64,21 +67,16 @@ impl AllScreen {
     }
 
     fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
-        let header = Paragraph::new(vec![
-            Line::from(vec![
-                Span::styled(
-                    "rusted-jetsons",
-                    Style::default()
-                        .fg(Color::Green)
-                        .add_modifier(Modifier::BOLD),
-                ),
-                Span::raw(" | "),
-                Span::styled(
-                    "v0.1.0",
-                    Style::default().fg(Color::Gray),
-                ),
-            ]),
-        ])
+        let header = Paragraph::new(vec![Line::from(vec![
+            Span::styled(
+                "rusted-jetsons",
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" | "),
+            Span::styled("v0.1.0", Style::default().fg(Color::Gray)),
+        ])])
         .alignment(Alignment::Center);
         f.render_widget(header, area);
     }
@@ -87,11 +85,11 @@ impl AllScreen {
         let body_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(10),  // CPU
-                Constraint::Length(10),  // GPU
-                Constraint::Length(10),  // Memory
-                Constraint::Length(10),  // Temperature
-                Constraint::Length(10),  // Power
+                Constraint::Length(10), // CPU
+                Constraint::Length(10), // GPU
+                Constraint::Length(10), // Memory
+                Constraint::Length(10), // Temperature
+                Constraint::Length(10), // Power
             ])
             .split(area);
 
@@ -104,11 +102,7 @@ impl AllScreen {
 
     fn draw_cpu<B: Backend>(&self, f: &mut Frame<B>, stats: &JetsonStats, area: Rect) {
         let gauge = Gauge::default()
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("CPU Usage"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("CPU Usage"))
             .gauge_style(Style::default().fg(Color::Green))
             .percent(stats.cpu.usage as u16)
             .label(format!("{}%", stats.cpu.usage));
@@ -117,11 +111,7 @@ impl AllScreen {
 
     fn draw_gpu<B: Backend>(&self, f: &mut Frame<B>, stats: &JetsonStats, area: Rect) {
         let gauge = Gauge::default()
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("GPU Usage"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("GPU Usage"))
             .gauge_style(Style::default().fg(Color::Blue))
             .percent(stats.gpu.usage as u16)
             .label(format!("{}%", stats.gpu.usage));
@@ -136,27 +126,18 @@ impl AllScreen {
         };
 
         let gauge = Gauge::default()
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title(format!(
-                        "Memory: {} MB / {} MB",
-                        stats.memory.ram_used / 1024,
-                        stats.memory.ram_total / 1024
-                    )),
-            )
+            .block(Block::default().borders(Borders::ALL).title(format!(
+                "Memory: {} MB / {} MB",
+                stats.memory.ram_used / 1024,
+                stats.memory.ram_total / 1024
+            )))
             .gauge_style(Style::default().fg(Color::Yellow))
             .percent(ram_percent)
             .label(format!("{}%", ram_percent));
         f.render_widget(gauge, area);
     }
 
-    fn draw_temperature<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &JetsonStats,
-        area: Rect,
-    ) {
+    fn draw_temperature<B: Backend>(&self, f: &mut Frame<B>, stats: &JetsonStats, area: Rect) {
         let board_temp = 0.0; // TODO: Implement board temp reading
         let text = format!(
             "CPU: {:.1}°C | GPU: {:.1}°C | Board: {:.1}°C",
@@ -164,11 +145,7 @@ impl AllScreen {
         );
 
         let paragraph = Paragraph::new(text.as_str())
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Temperature"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("Temperature"))
             .alignment(Alignment::Center);
         f.render_widget(paragraph, area);
     }
