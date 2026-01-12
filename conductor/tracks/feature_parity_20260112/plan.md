@@ -56,14 +56,14 @@
   - [x] Write tests for governor state reading
   - [x] Write tests for CPU model info extraction
 
-- [ ] Task: Implement CPU monitoring module
-  - [ ] Implement CPU core count detection from /proc/cpuinfo
-  - [ ] Implement per-core usage reading from /proc/stat
-  - [ ] Implement CPU frequency detection from sysfs
-  - [ ] Implement governor state reading
-  - [ ] Implement CPU model info extraction
-  - [ ] Add error handling for missing sysfs paths
-  - [ ] Ensure async I/O with tokio
+- [x] Task: Implement CPU monitoring module [d41333b]
+  - [x] Implement CPU core count detection from /proc/cpuinfo
+  - [x] Implement per-core usage reading from /proc/stat
+  - [x] Implement CPU frequency detection from sysfs
+  - [x] Implement governor state reading
+  - [x] Implement CPU model info extraction
+  - [x] Add error handling for missing sysfs paths
+  - [x] Ensure async I/O with tokio
 
 - [ ] Task: Write tests for GPU monitoring module
   - [ ] Write tests for GPU usage reading from nvidia-smi
