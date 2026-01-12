@@ -2,12 +2,15 @@
 // Copyright (C) 2026 Mateusz Krawczuk with work <m.krawczuk@cybrixsystems.com>
 
 //! GPU monitoring module
+//!
+//! Provides GPU statistics including usage, frequency, temperature, and governor information
+//! using sysfs devfreq interface for NVIDIA Jetson devices.
 
 use std::fs;
 use std::path::Path;
 
 /// GPU statistics
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
 pub struct GpuStats {
     pub usage: f32,
     pub frequency: u32,
@@ -17,6 +20,17 @@ pub struct GpuStats {
 
 impl GpuStats {
     /// Get current GPU statistics
+    ///
+    /// Returns a `GpuStats` struct containing:
+    /// - GPU usage percentage
+    /// - GPU frequency (in Hz)
+    /// - GPU temperature (in Celsius)
+    /// - GPU governor (performance, powersave, etc.)
+    ///
+    /// Reads from `/sys/class/devfreq` for frequency and governor,
+    /// `/sys/class/thermal` for temperature.
+    ///
+    /// Supports NVIDIA Thor (tegra264) via `gpu-gpc-0` and `gpu-nvd-0` devfreq paths.
     pub fn get() -> Self {
         let mut stats = GpuStats::default();
 
@@ -106,13 +120,191 @@ fn read_gpu_usage(devfreq_path: &str) -> f32 {
 }
 
 /// Read GPU maximum frequency
-fn read_gpu_max_freq(devfreq_path: &str) -> u32 {
+///
+/// Reads the maximum frequency from the specified devfreq path.
+///
+/// # Arguments
+/// * `devfreq_path` - Path to the GPU devfreq directory (e.g., "/sys/class/devfreq/gpu")
+///
+/// # Returns
+/// Maximum GPU frequency in Hz, or 0 if unavailable.
+pub fn read_gpu_max_freq(devfreq_path: &str) -> u32 {
     let path = Path::new(devfreq_path).join("max_freq");
 
     fs::read_to_string(path)
         .ok()
         .and_then(|s| s.trim().parse().ok())
         .unwrap_or(0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_gpu_stats_default() {
+        let stats = GpuStats::default();
+        assert_eq!(stats.usage, 0.0);
+        assert_eq!(stats.frequency, 0);
+        assert_eq!(stats.temperature, 0.0);
+        assert_eq!(stats.governor, "");
+    }
+
+    #[test]
+    fn test_gpu_stats_structure() {
+        let stats = GpuStats {
+            usage: 75.5,
+            frequency: 1_500_000_000,
+            temperature: 65.0,
+            governor: "performance".to_string(),
+        };
+
+        assert_eq!(stats.usage, 75.5);
+        assert_eq!(stats.frequency, 1_500_000_000);
+        assert_eq!(stats.temperature, 65.0);
+        assert_eq!(stats.governor, "performance");
+    }
+
+    #[test]
+    fn test_gpu_stats_get() {
+        let stats = GpuStats::get();
+
+        assert!(
+            stats.usage >= 0.0 && stats.usage <= 100.0,
+            "GPU usage should be between 0 and 100"
+        );
+        assert!(
+            stats.temperature >= 0.0 && stats.temperature < 120.0,
+            "GPU temperature should be reasonable (0-120°C)"
+        );
+    }
+
+    #[test]
+    fn test_find_gpu_devfreq() {
+        let devfreq_path = find_gpu_devfreq();
+
+        if let Some(path_str) = devfreq_path {
+            let path = Path::new(&path_str);
+            assert!(path.exists(), "Devfreq path should exist");
+        }
+    }
+
+    #[test]
+    fn test_gpu_frequency_range() {
+        let stats = GpuStats::get();
+
+        if stats.frequency > 0 {
+            assert!(
+                stats.frequency >= 100_000_000,
+                "GPU frequency should be at least 100MHz"
+            );
+            assert!(
+                stats.frequency <= 3_000_000_000,
+                "GPU frequency should be at most 3GHz"
+            );
+        }
+    }
+
+    #[test]
+    fn test_gpu_usage_calculation() {
+        let devfreq_path = find_gpu_devfreq();
+
+        if devfreq_path.is_some() {
+            let usage = read_gpu_usage(&devfreq_path.unwrap());
+            assert!(
+                usage >= 0.0 && usage <= 100.0,
+                "GPU usage should be between 0 and 100"
+            );
+        }
+    }
+
+    #[test]
+    fn test_gpu_temperature_range() {
+        let temp = read_gpu_temp();
+
+        if temp > 0.0 {
+            assert!(temp >= 20.0, "GPU temperature should be at least 20°C");
+            assert!(temp < 120.0, "GPU temperature should be less than 120°C");
+        }
+    }
+
+    #[test]
+    fn test_gpu_governor() {
+        let devfreq_path = find_gpu_devfreq();
+
+        if devfreq_path.is_some() {
+            let governor = read_gpu_governor(&devfreq_path.unwrap());
+            assert!(!governor.is_empty(), "Governor should not be empty");
+        }
+    }
+
+    #[test]
+    fn test_gpu_serialization() {
+        let stats = GpuStats {
+            usage: 85.5,
+            frequency: 2_000_000_000,
+            temperature: 70.0,
+            governor: "performance".to_string(),
+        };
+
+        let json = serde_json::to_string(&stats);
+        assert!(json.is_ok(), "GpuStats should be serializable");
+
+        let deserialized: Result<GpuStats, _> = serde_json::from_str(&json.unwrap());
+        assert!(deserialized.is_ok(), "GpuStats should be deserializable");
+    }
+
+    #[test]
+    fn test_read_gpu_max_freq() {
+        let devfreq_path = find_gpu_devfreq();
+
+        if devfreq_path.is_some() {
+            let max_freq = read_gpu_max_freq(&devfreq_path.unwrap());
+
+            if max_freq > 0 {
+                assert!(
+                    max_freq >= 100_000_000,
+                    "Max freq should be at least 100MHz"
+                );
+            }
+        }
+    }
+
+    #[test]
+    #[ignore = "Requires Jetson hardware - run with: cargo test gpu -- --ignored"]
+    fn test_print_gpu_info() {
+        println!("\n=== GPU Information Test ===");
+
+        let stats = GpuStats::get();
+        println!("GPU usage: {:.2}%", stats.usage);
+        println!("GPU frequency: {} MHz", stats.frequency / 1_000_000);
+        println!("GPU temperature: {:.1}°C", stats.temperature);
+        println!("GPU governor: {}", stats.governor);
+
+        if let Some(devfreq_path) = find_gpu_devfreq() {
+            println!("\nDevfreq path: {}", devfreq_path);
+            println!(
+                "Max frequency: {} MHz",
+                read_gpu_max_freq(&devfreq_path) / 1_000_000
+            );
+        }
+
+        println!("\n=== Test Complete ===");
+    }
+
+    #[test]
+    fn test_nvidia_thor_support() {
+        let devfreq_path = find_gpu_devfreq();
+
+        if devfreq_path.is_some() {
+            let path_str = devfreq_path.unwrap();
+            let is_thor = path_str.contains("gpu-gpc-0") || path_str.contains("gpu-nvd-0");
+
+            if is_thor {
+                println!("NVIDIA Thor GPU detected via devfreq path: {}", path_str);
+            }
+        }
+    }
 }
 
 /// Read GPU temperature
