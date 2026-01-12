@@ -37,6 +37,14 @@
   - [x] Marked hardware test as #[ignore] for non-Jetson systems
   - [x] All unit tests pass (6 passed, 1 ignored)
 
+- [x] Task: Add comprehensive L4T to Jetpack mapping [7d44669]
+  - [x] Implemented derive_jetpack_from_l4t() with full version table
+  - [x] Supports JetPack 2.x through 7.x
+  - [x] Includes development preview (DP) versions
+  - [x] Maps L4T 36.4 → Jetpack 6.1 correctly
+  - [x] Maps L4T 36.4.3 → Jetpack 6.2 correctly
+  - [x] Maps all Thor, Orin, Xavier, TX2, TX1, TK1 versions
+
 ## Phase 2: Core Monitoring Modules
 
 ### Tasks

@@ -33,6 +33,11 @@ pub fn parse_l4t_version(content: &str) -> String {
             if key.trim() == "L4T_VERSION" {
                 return value.trim().to_string();
             }
+        } else if line.starts_with('#') {
+            let l4t = parse_l4t_from_comment(line, "");
+            if !l4t.is_empty() {
+                return l4t;
+            }
         }
     }
     String::new()
@@ -44,6 +49,11 @@ pub fn parse_jetpack_version(content: &str) -> String {
         if let Some((key, value)) = line.split_once('=') {
             if key.trim() == "JETPACK_VERSION" {
                 return value.trim().to_string();
+            }
+        } else if line.starts_with('#') {
+            let jetpack = parse_jetpack_from_comment(line, "");
+            if !jetpack.is_empty() {
+                return jetpack;
             }
         }
     }
@@ -156,15 +166,33 @@ pub fn detect_board() -> BoardInfo {
         info.l4t = parse_l4t_version(&content);
         info.jetpack = parse_jetpack_version(&content);
 
+        let mut found_board = false;
+
         for line in content.lines() {
             if let Some((key, value)) = line.split_once('=') {
                 match key.trim() {
-                    "BOARD" => info.model = value.trim().to_string(),
+                    "BOARD" => {
+                        info.model = value.trim().to_string();
+                        found_board = true;
+                    }
                     "SERIAL_NUMBER" => info.serial = value.trim().to_string(),
                     _ => {}
                 }
+            } else if line.starts_with('#') {
+                info.l4t = parse_l4t_from_comment(line, &info.l4t);
+                info.jetpack = parse_jetpack_from_comment(line, &info.jetpack);
+                if !found_board {
+                    if let Some(board) = parse_board_from_comment(line) {
+                        info.model = board;
+                        found_board = true;
+                    }
+                }
             }
         }
+    }
+
+    if (info.jetpack.is_empty() || info.jetpack == "Unknown") && !info.l4t.is_empty() {
+        info.jetpack = derive_jetpack_from_l4t(&info.l4t);
     }
 
     if info.model == "Unknown Jetson Board" || info.model.is_empty() {
@@ -180,6 +208,168 @@ pub fn detect_board() -> BoardInfo {
     }
 
     info
+}
+
+/// Derive Jetpack version from L4T version
+fn derive_jetpack_from_l4t(l4t: &str) -> String {
+    use std::collections::HashMap;
+
+    let parts: Vec<&str> = l4t.split('.').collect();
+    if parts.len() < 2 {
+        return "Unknown".to_string();
+    }
+
+    let key = if parts.len() >= 3 {
+        format!("{}.{}.{}", parts[0], parts[1], parts[2])
+    } else {
+        format!("{}.{}", parts[0], parts[1])
+    };
+
+    let l4t_to_jetpack: HashMap<&str, &str> = [
+        ("38.4.4", "7.1"),
+        ("38.4.3", "7.1"),
+        ("38.4.2", "7.1"),
+        ("38.4.1", "7.1"),
+        ("38.4", "7.1"),
+        ("38.2.1", "7.0"),
+        ("38.2", "7.0"),
+        ("38.1", "7.0"),
+        ("38.0", "7.0"),
+        ("36.4.7", "6.2.1"),
+        ("36.4.6", "6.2.1"),
+        ("36.4.5", "6.2.1"),
+        ("36.4.4", "6.2.1"),
+        ("36.4.3", "6.2"),
+        ("36.4.2", "6.2"),
+        ("36.4.1", "6.2"),
+        ("36.4", "6.1"),
+        ("36.3", "6.0"),
+        ("36.2", "6.0 DP"),
+        ("36.1", "6.0"),
+        ("36.0", "6.0"),
+        ("35.6.2", "5.1.5"),
+        ("35.6.1", "5.1.5"),
+        ("35.6", "5.1.4"),
+        ("35.5", "5.1.3"),
+        ("35.4.1", "5.1.2"),
+        ("35.4", "5.1.2"),
+        ("35.3.1", "5.1.1"),
+        ("35.3", "5.1.1"),
+        ("35.2.1", "5.1"),
+        ("35.2", "5.1"),
+        ("35.1", "5.1"),
+        ("35.0", "5.1"),
+        ("34.1.1", "5.0.1 DP"),
+        ("34.1", "5.0 DP"),
+        ("34.0", "5.0 DP"),
+        ("32.7.6", "4.6.6"),
+        ("32.7.5", "4.6.5"),
+        ("32.7.4", "4.6.4"),
+        ("32.7.3", "4.6.3"),
+        ("32.7.2", "4.6.2"),
+        ("32.7.1", "4.6.1"),
+        ("32.7", "4.6.x"),
+        ("32.6.1", "4.6"),
+        ("32.6", "4.6"),
+        ("32.5.1", "4.5.1"),
+        ("32.5", "4.5"),
+        ("32.4.4", "4.4.1"),
+        ("32.4.3", "4.4"),
+        ("32.4.2", "4.4 DP"),
+        ("32.4", "4.4"),
+        ("32.3.1", "4.3"),
+        ("32.3", "4.3"),
+        ("32.2.1", "4.2.3"),
+        ("32.2", "4.2.2"),
+        ("32.1.1", "4.1.1 DP"),
+        ("32.1", "4.1"),
+        ("31.1", "4.1 DP"),
+        ("31.0", "4.1 DP"),
+        ("28.5", "3.3.4"),
+        ("28.4", "3.3.3"),
+        ("28.3.2", "3.3.2"),
+        ("28.3.1", "3.3.1"),
+        ("28.3", "3.3.2"),
+        ("28.2.1", "3.3"),
+        ("28.2", "3.2.1"),
+        ("27.1", "3.0"),
+        ("26.0", "3.0"),
+        ("25.0", "3.0"),
+        ("24.2.1", "2.3.1"),
+        ("24.1", "2.3"),
+        ("23.0", "2.3"),
+        ("22.0", "2.3"),
+        ("21.5", "2.3.1"),
+        ("21.0", "2.3"),
+    ]
+    .into_iter()
+    .collect();
+
+    l4t_to_jetpack
+        .get(key.as_str())
+        .copied()
+        .unwrap_or("Unknown")
+        .to_string()
+}
+
+/// Parse L4T version from comment format like "# R36 (release), REVISION: 4.3"
+fn parse_l4t_from_comment(line: &str, current_l4t: &str) -> String {
+    if current_l4t.is_empty() && line.contains("R") {
+        if let Some(start) = line.find('R') {
+            let rest = &line[start + 1..];
+            if let Some(end) = rest.find(' ') {
+                let release_num = &rest[..end];
+                let release_num: u32 = release_num.parse().unwrap_or(0);
+                if release_num >= 20 {
+                    if line.contains("REVISION:") {
+                        if let Some(rev_start) = line.find("REVISION:") {
+                            let rest = &line[rev_start + "REVISION:".len()..];
+                            if let Some(rev_end) = rest.find(',') {
+                                return format!("{}.{}", release_num, rest[..rev_end].trim());
+                            }
+                        }
+                    }
+                    return format!("{}.0", release_num);
+                }
+            }
+        }
+    }
+    current_l4t.to_string()
+}
+
+/// Parse Jetpack version from comment line
+fn parse_jetpack_from_comment(line: &str, current_jetpack: &str) -> String {
+    if !current_jetpack.is_empty() {
+        return current_jetpack.to_string();
+    }
+    if line.contains("JETPACK_VERSION=") {
+        if let Some(start) = line.find("JETPACK_VERSION=") {
+            let rest = &line[start + "JETPACK_VERSION=".len()..];
+            let end = rest
+                .find(|c: char| c == ',' || c == ' ' || c == '\n')
+                .unwrap_or(rest.len());
+            return rest[..end].trim().to_string();
+        }
+    }
+    current_jetpack.to_string()
+}
+
+/// Parse board model from comment line like "BOARD: generic"
+fn parse_board_from_comment(line: &str) -> Option<String> {
+    if line.contains("BOARD:") {
+        if let Some(start) = line.find("BOARD:") {
+            let rest = &line[start + "BOARD:".len()..];
+            let end = rest
+                .find(',')
+                .or_else(|| rest.find('\n'))
+                .unwrap_or(rest.len());
+            let board = rest[..end].trim();
+            if board != "generic" && !board.is_empty() {
+                return Some(board.to_string());
+            }
+        }
+    }
+    None
 }
 
 /// Check if running on a Jetson device
