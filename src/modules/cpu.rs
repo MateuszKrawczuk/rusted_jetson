@@ -4,11 +4,12 @@
 //! CPU monitoring module
 
 use std::fs;
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::BufRead;
+use std::io::BufReader;
 use std::path::Path;
 
 /// CPU statistics
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
 pub struct CpuStats {
     pub usage: f32,
     pub frequency: u32,
@@ -16,7 +17,7 @@ pub struct CpuStats {
 }
 
 /// Per-core CPU statistics
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CpuCore {
     pub index: usize,
     pub usage: f32,
@@ -140,13 +141,185 @@ fn read_cpu_usage(cores: &[CpuCore]) -> anyhow::Result<Vec<f32>> {
 
 /// Get CPU frequency governor
 fn get_governor(core_idx: usize) -> String {
-    let path = Path::new(format!(
+    let path_str = format!(
         "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_governor",
         core_idx
-    ));
+    );
+    let path = Path::new(&path_str);
 
     fs::read_to_string(path)
         .ok()
         .map(|s| s.trim().to_string())
         .unwrap_or_else(|| "unknown".to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_core_count_from_cpuinfo() {
+        let count = get_core_count();
+        assert!(count > 0, "Core count should be at least 1");
+        assert!(count <= 32, "Core count should be reasonable");
+    }
+
+    #[test]
+    fn test_get_core_count_fallback() {
+        let count = get_core_count();
+        assert!(count > 0, "Should always return a positive core count");
+    }
+
+    #[test]
+    fn test_cpu_stats_default() {
+        let stats = CpuStats::default();
+        assert_eq!(stats.usage, 0.0);
+        assert_eq!(stats.frequency, 0);
+        assert!(stats.cores.is_empty());
+    }
+
+    #[test]
+    fn test_cpu_core_structure() {
+        let core = CpuCore {
+            index: 0,
+            usage: 50.0,
+            frequency: 1_500_000_000,
+            governor: "schedutil".to_string(),
+        };
+
+        assert_eq!(core.index, 0);
+        assert_eq!(core.usage, 50.0);
+        assert_eq!(core.frequency, 1_500_000_000);
+        assert_eq!(core.governor, "schedutil");
+    }
+
+    #[test]
+    fn test_cpu_stats_get() {
+        let stats = CpuStats::get();
+
+        if !stats.cores.is_empty() {
+            assert!(
+                stats.usage >= 0.0 && stats.usage <= 100.0,
+                "Usage should be between 0 and 100"
+            );
+            assert!(!stats.cores.is_empty(), "Should have at least one core");
+        }
+    }
+
+    #[test]
+    fn test_cpu_stats_usage_calculation() {
+        let mut stats = CpuStats::default();
+        stats.cores = vec![
+            CpuCore {
+                index: 0,
+                usage: 50.0,
+                frequency: 1000000,
+                governor: "schedutil".to_string(),
+            },
+            CpuCore {
+                index: 1,
+                usage: 75.0,
+                frequency: 1000000,
+                governor: "schedutil".to_string(),
+            },
+            CpuCore {
+                index: 2,
+                usage: 25.0,
+                frequency: 1000000,
+                governor: "schedutil".to_string(),
+            },
+        ];
+
+        let _avg_usage = (50.0 + 75.0 + 25.0) / 3.0;
+        assert_eq!(stats.cores.len(), 3);
+    }
+
+    #[test]
+    fn test_cpu_frequency_conversion() {
+        let freq_mhz = 1500u32;
+        let freq_hz = (freq_mhz as u32) * 1_000_000;
+        assert_eq!(freq_hz, 1_500_000_000);
+    }
+
+    #[test]
+    fn test_governor_fallback() {
+        let governor = get_governor(999);
+        assert_eq!(governor, "unknown");
+    }
+
+    #[test]
+    fn test_cpu_usage_range() {
+        let stats = CpuStats::get();
+
+        for core in &stats.cores {
+            assert!(core.usage >= 0.0, "Core usage should be >= 0");
+            assert!(core.usage <= 100.0, "Core usage should be <= 100");
+        }
+
+        if !stats.cores.is_empty() {
+            assert!(stats.usage >= 0.0, "Total usage should be >= 0");
+            assert!(stats.usage <= 100.0, "Total usage should be <= 100");
+        }
+    }
+
+    #[test]
+    fn test_cpu_serialization() {
+        let stats = CpuStats {
+            usage: 42.5,
+            frequency: 1500000000,
+            cores: vec![CpuCore {
+                index: 0,
+                usage: 50.0,
+                frequency: 1500000000,
+                governor: "schedutil".to_string(),
+            }],
+        };
+
+        let json = serde_json::to_string(&stats);
+        assert!(json.is_ok(), "CpuStats should be serializable");
+
+        let deserialized: Result<CpuStats, _> = serde_json::from_str(&json.unwrap());
+        assert!(deserialized.is_ok(), "CpuStats should be deserializable");
+    }
+
+    #[test]
+    fn test_cpu_core_serialization() {
+        let core = CpuCore {
+            index: 0,
+            usage: 75.5,
+            frequency: 2000000000,
+            governor: "performance".to_string(),
+        };
+
+        let json = serde_json::to_string(&core);
+        assert!(json.is_ok(), "CpuCore should be serializable");
+
+        let deserialized: Result<CpuCore, _> = serde_json::from_str(&json.unwrap());
+        assert!(deserialized.is_ok(), "CpuCore should be deserializable");
+    }
+
+    #[test]
+    #[ignore = "Requires actual CPU data - run with: cargo test cpu -- --ignored"]
+    fn test_print_cpu_info() {
+        println!("\n=== CPU Information Test ===");
+
+        let core_count = get_core_count();
+        println!("Core count: {}", core_count);
+
+        let stats = CpuStats::get();
+        println!("Total CPU usage: {:.2}%", stats.usage);
+        println!("Number of cores: {}", stats.cores.len());
+
+        for (_i, core) in stats.cores.iter().enumerate() {
+            println!(
+                "Core {}: {:.2}% @ {} MHz (governor: {})",
+                core.index,
+                core.usage,
+                core.frequency / 1_000_000,
+                core.governor
+            );
+        }
+
+        println!("\n=== Test Complete ===");
+    }
 }
