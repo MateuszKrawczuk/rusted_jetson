@@ -128,6 +128,22 @@ pub fn detect_architecture() -> String {
         }
     }
 
+    let compatible_path = Path::new("/sys/firmware/devicetree/base/compatible");
+    if let Ok(compatible) = fs::read_to_string(compatible_path) {
+        let compatible = compatible.to_lowercase();
+        if compatible.contains("tegra264") {
+            return "Thor (tegra264)".to_string();
+        } else if compatible.contains("tegra234") {
+            return "Orin (tegra234)".to_string();
+        } else if compatible.contains("tegra194") {
+            return "Xavier (tegra194)".to_string();
+        } else if compatible.contains("tegra186") {
+            return "TX2 (tegra186)".to_string();
+        } else if compatible.contains("tegra210") {
+            return "TX1 (tegra210)".to_string();
+        }
+    }
+
     "Unknown".to_string()
 }
 
@@ -247,6 +263,14 @@ mod tests {
         println!("Jetpack: {}", board.jetpack);
         println!("L4T: {}", board.l4t);
         println!("Serial: {}", board.serial);
+
+        let release_path = Path::new("/etc/nv_tegra_release");
+        if let Ok(content) = fs::read_to_string(release_path) {
+            println!("\n=== Debug: /etc/nv_tegra_release ===");
+            println!("{}", content);
+        } else {
+            println!("\n=== Debug: /etc/nv_tegra_release not found ===");
+        }
 
         println!("\n=== Test Complete ===");
     }
