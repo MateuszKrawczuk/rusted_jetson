@@ -13,10 +13,17 @@ use ratatui::{
 };
 
 use crate::{
+    gpu::GpuStats as FullGpuStats, temperature::TemperatureStats as FullTemperatureStats,
     SimpleGpuStats, SimpleTemperatureStats,
-    gpu::GpuStats as FullGpuStats,
-    temperature::TemperatureStats as FullTemperatureStats,
 };
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct GpuScreenStats {
+    pub gpu: SimpleGpuStats,
+    pub temperature: SimpleTemperatureStats,
+    pub gpu_name: String,
+    pub gpu_arch: String,
+}
 
 /// GPU screen - detailed GPU monitoring
 pub struct GpuScreen {
@@ -52,11 +59,7 @@ impl GpuScreen {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("GPU"),
-            );
+            .block(Block::default().borders(Borders::ALL).title("GPU"));
         f.render_widget(paragraph, size);
     }
 
@@ -64,9 +67,9 @@ impl GpuScreen {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3),  // Header
-                Constraint::Min(0),     // Content
-                Constraint::Length(3),  // Footer
+                Constraint::Length(3), // Header
+                Constraint::Min(0),    // Content
+                Constraint::Length(3), // Footer
             ])
             .split(f.size());
 
@@ -76,36 +79,26 @@ impl GpuScreen {
     }
 
     fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
-        let header = Paragraph::new(vec![
-            Line::from(vec![
-                Span::styled(
-                    "rusted-jetsons",
-                    Style::default()
-                        .fg(Color::Green)
-                        .add_modifier(Modifier::BOLD),
-                ),
-                Span::raw(" | "),
-                Span::styled(
-                    "GPU Details",
-                    Style::default().fg(Color::Gray),
-                ),
-            ]),
-        ])
+        let header = Paragraph::new(vec![Line::from(vec![
+            Span::styled(
+                "rusted-jetsons",
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" | "),
+            Span::styled("GPU Details", Style::default().fg(Color::Gray)),
+        ])])
         .alignment(Alignment::Center);
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &GpuScreenStats,
-        area: Rect,
-    ) {
+    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
         let body_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Length(25),  // Info
-                Constraint::Min(0),       // Graph
+                Constraint::Length(25), // Info
+                Constraint::Min(0),     // Graph
             ])
             .split(area);
 
@@ -113,19 +106,14 @@ impl GpuScreen {
         self.draw_usage_graph(f, stats, body_chunks[1]);
     }
 
-    fn draw_gpu_info<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &GpuScreenStats,
-        area: Rect,
-    ) {
+    fn draw_gpu_info<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
         let info_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3),  // Usage gauge
-                Constraint::Length(5),  // Details
-                Constraint::Length(5),  // Temperature
-                Constraint::Min(0),     // Info
+                Constraint::Length(3), // Usage gauge
+                Constraint::Length(5), // Details
+                Constraint::Length(5), // Temperature
+                Constraint::Min(0),    // Info
             ])
             .split(area);
 
@@ -135,34 +123,22 @@ impl GpuScreen {
         self.draw_gpu_name(f, stats, info_chunks[3]);
     }
 
-    fn draw_usage_gauge<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &GpuScreenStats,
-        area: Rect,
-    ) {
+    fn draw_usage_gauge<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
         let gauge = Gauge::default()
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("GPU Usage"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("GPU Usage"))
             .gauge_style(Style::default().fg(Color::Blue))
             .percent(stats.gpu.usage as u16)
             .label(format!("{}%", stats.gpu.usage));
         f.render_widget(gauge, area);
     }
 
-    fn draw_details<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &GpuScreenStats,
-        area: Rect,
-    ) {
+    fn draw_details<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "GPU Details",
-                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
             )),
             Line::from(""),
             Line::from(vec![
@@ -179,25 +155,18 @@ impl GpuScreen {
             ]),
         ];
 
-        let paragraph = Paragraph::new(text)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Details"),
-            );
+        let paragraph =
+            Paragraph::new(text).block(Block::default().borders(Borders::ALL).title("Details"));
         f.render_widget(paragraph, area);
     }
 
-    fn draw_temperature<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &GpuScreenStats,
-        area: Rect,
-    ) {
+    fn draw_temperature<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "GPU Temperature",
-                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
             )),
             Line::from(""),
             Line::from(vec![
@@ -206,25 +175,18 @@ impl GpuScreen {
             ]),
         ];
 
-        let paragraph = Paragraph::new(text)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Temperature"),
-            );
+        let paragraph =
+            Paragraph::new(text).block(Block::default().borders(Borders::ALL).title("Temperature"));
         f.render_widget(paragraph, area);
     }
 
-    fn draw_gpu_name<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &GpuScreenStats,
-        area: Rect,
-    ) {
+    fn draw_gpu_name<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "GPU Information",
-                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
             )),
             Line::from(""),
             Line::from(vec![
@@ -237,46 +199,30 @@ impl GpuScreen {
             ]),
         ];
 
-        let paragraph = Paragraph::new(text)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("GPU Info"),
-            );
+        let paragraph =
+            Paragraph::new(text).block(Block::default().borders(Borders::ALL).title("GPU Info"));
         f.render_widget(paragraph, area);
     }
 
-    fn draw_usage_graph<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        _stats: &GpuScreenStats,
-        area: Rect,
-    ) {
+    fn draw_usage_graph<B: Backend>(&self, f: &mut Frame<B>, _stats: &GpuScreenStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "GPU Usage History",
-                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
             )),
             Line::from(""),
             Line::from("Usage history not implemented yet"),
         ];
 
         let paragraph = Paragraph::new(text)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("History"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("History"))
             .alignment(Alignment::Center);
         f.render_widget(paragraph, area);
     }
 
-    fn draw_footer<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &GpuScreenStats,
-        area: Rect,
-    ) {
+    fn draw_footer<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
         let footer_text = format!(
             "q: quit | 1-8: screens | h: help | GPU: {:.1}°C",
             stats.temperature.gpu

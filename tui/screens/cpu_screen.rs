@@ -13,13 +13,9 @@ use ratatui::{
 };
 
 use crate::{
-    SimpleCpuStats, SimpleFanStats, SimpleTemperatureStats,
-};
-
-use crate::{
-    cpu::CpuStats as FullCpuStats,
-    fan::FanStats as FullFanStats,
-    temperature::TemperatureStats as FullTemperatureStats,
+    cpu::CpuStats as FullCpuStats, fan::FanStats as FullFanStats,
+    temperature::TemperatureStats as FullTemperatureStats, SimpleCpuStats, SimpleFanStats,
+    SimpleTemperatureStats,
 };
 
 use crate::{SimpleCpuStats, SimpleFanStats, SimpleTemperatureStats};
@@ -70,11 +66,7 @@ impl CpuScreen {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("CPU"),
-            );
+            .block(Block::default().borders(Borders::ALL).title("CPU"));
         f.render_widget(paragraph, size);
     }
 
@@ -82,9 +74,9 @@ impl CpuScreen {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3),  // Header
-                Constraint::Min(0),     // Content
-                Constraint::Length(3),  // Footer
+                Constraint::Length(3), // Header
+                Constraint::Min(0),    // Content
+                Constraint::Length(3), // Footer
             ])
             .split(f.size());
 
@@ -94,21 +86,16 @@ impl CpuScreen {
     }
 
     fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
-        let header = Paragraph::new(vec![
-            Line::from(vec![
-                Span::styled(
-                    "rusted-jetsons",
-                    Style::default()
-                        .fg(Color::Green)
-                        .add_modifier(Modifier::BOLD),
-                ),
-                Span::raw(" | "),
-                Span::styled(
-                    "CPU Details",
-                    Style::default().fg(Color::Gray),
-                ),
-            ]),
-        ])
+        let header = Paragraph::new(vec![Line::from(vec![
+            Span::styled(
+                "rusted-jetsons",
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" | "),
+            Span::styled("CPU Details", Style::default().fg(Color::Gray)),
+        ])])
         .alignment(Alignment::Center);
         f.render_widget(header, area);
     }
@@ -117,8 +104,8 @@ impl CpuScreen {
         let body_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Length(20),  // Core list
-                Constraint::Min(0),       // Core details
+                Constraint::Length(20), // Core list
+                Constraint::Min(0),     // Core details
             ])
             .split(area);
 
@@ -126,30 +113,16 @@ impl CpuScreen {
         self.draw_core_details(f, stats, body_chunks[1]);
     }
 
-    fn draw_core_list<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &CpuScreenStats,
-        area: Rect,
-    ) {
+    fn draw_core_list<B: Backend>(&self, f: &mut Frame<B>, stats: &CpuScreenStats, area: Rect) {
         let overall_gauge = Gauge::default()
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Overall CPU"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("Overall CPU"))
             .gauge_style(Style::default().fg(Color::Green))
             .percent(stats.overall.usage as u16)
             .label(format!("{}%", stats.overall.usage));
         f.render_widget(overall_gauge, area);
     }
 
-    fn draw_core_details<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &CpuScreenStats,
-        area: Rect,
-    ) {
+    fn draw_core_details<B: Backend>(&self, f: &mut Frame<B>, stats: &CpuScreenStats, area: Rect) {
         let items = stats
             .cores
             .iter()
@@ -165,11 +138,7 @@ impl CpuScreen {
             .collect();
 
         let list = List::new(items)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("CPU Cores"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("CPU Cores"))
             .highlight_style(Style::default().bg(Color::DarkGray))
             .highlight_symbol(">> ");
 
@@ -178,7 +147,10 @@ impl CpuScreen {
 
     fn draw_footer<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
         let fan_temp = if let Some(stats) = &self.stats {
-            format!("Fan: {}% | CPU: {:.1}°C", stats.fan.speed, stats.temperature.cpu)
+            format!(
+                "Fan: {}% | CPU: {:.1}°C",
+                stats.fan.speed, stats.temperature.cpu
+            )
         } else {
             "Loading...".to_string()
         };

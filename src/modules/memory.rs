@@ -7,7 +7,7 @@ use std::fs;
 use std::path::Path;
 
 /// Memory statistics
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize)]
 pub struct MemoryStats {
     pub ram_used: u64,
     pub ram_total: u64,
@@ -41,11 +41,7 @@ fn parse_meminfo(content: &str) -> MemoryStats {
     for line in content.lines() {
         if let Some((key, value)) = line.split_once(':') {
             // Remove kB suffix and trim
-            let value_str = value
-                .trim()
-                .trim_end_matches(" kB")
-                .trim()
-                .to_string();
+            let value_str = value.trim().trim_end_matches(" kB").trim().to_string();
 
             if let Ok(value) = value_str.parse::<u64>() {
                 meminfo.insert(key.trim(), value * 1024); // Convert to bytes
@@ -61,7 +57,9 @@ fn parse_meminfo(content: &str) -> MemoryStats {
     stats.ram_cached = mem_cached;
 
     // Calculate used RAM
-    stats.ram_used = stats.ram_total.saturating_sub(mem_free + mem_buffers + mem_cached);
+    stats.ram_used = stats
+        .ram_total
+        .saturating_sub(mem_free + mem_buffers + mem_cached);
 
     // Parse SWAP
     stats.swap_total = *meminfo.get("SwapTotal").unwrap_or(&0);

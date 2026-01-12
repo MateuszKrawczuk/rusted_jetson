@@ -44,18 +44,90 @@ pub use modules::{
     hardware::BoardInfo,
 };
 
-/// Re-export simple types for TUI compatibility
-pub use CpuStats as SimpleCpuStats;
-pub use GpuStats as SimpleGpuStats;
-pub use MemoryStats as SimpleMemoryStats;
-pub use FanStats as SimpleFanStats;
-pub use TemperatureStats as SimpleTemperatureStats;
-pub use PowerStats as SimplePowerStats;
-pub use BoardInfo as SimpleBoardInfo;
+#[cfg(feature = "telemetry")]
+pub use telemetry::TelemetryExporter;
+
+pub use error::{Error, Result};
 
 /// Main Jetson monitor structure
 pub struct JetsonMonitor {
     interval: std::time::Duration,
+}
+
+impl JetsonMonitor {
+    /// Create a new Jetson monitor
+    pub fn new() -> Result<Self, Error> {
+        Ok(Self {
+            interval: std::time::Duration::from_secs(1),
+        })
+    }
+
+    /// Start monitoring
+    pub async fn start(&mut self) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+/// Jetson statistics structure
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct JetsonStats {
+    pub cpu: CpuStats,
+    pub gpu: GpuStats,
+    pub memory: MemoryStats,
+    pub fan: FanStats,
+    pub temperature: TemperatureStats,
+    pub power: PowerStats,
+    pub board: BoardInfo,
+}
+
+/// Simple CPU stats for TUI
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleCpuStats {
+    pub usage: f32,
+    pub frequency: u32,
+}
+
+/// Simple GPU stats for TUI
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleGpuStats {
+    pub usage: f32,
+    pub frequency: u32,
+}
+
+/// Simple memory stats for TUI
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleMemoryStats {
+    pub ram_used: u64,
+    pub ram_total: u64,
+    pub swap_used: u64,
+    pub swap_total: u64,
+}
+
+/// Simple fan stats for TUI
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleFanStats {
+    pub speed: u8,
+}
+
+/// Simple temperature stats for TUI
+#[derive(Debug,, Clone, serde::Serialize)]
+pub struct SimpleTemperatureStats {
+    pub cpu: f32,
+    pub gpu: f32,
+}
+
+/// Simple power stats for TUI
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimplePowerStats {
+    pub total: f32,
+}
+
+/// Simple board info for TUI
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleBoardInfo {
+    pub model: String,
+    pub jetpack: String,
+    pub l4t: String,
 }
 
 impl JetsonMonitor {
