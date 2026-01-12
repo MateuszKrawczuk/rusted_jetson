@@ -216,4 +216,38 @@ mod tests {
             has_fuse || Path::new("/etc/nv_tegra_release").exists()
         );
     }
+
+    #[test]
+    #[ignore = "Requires Jetson hardware - run with: cargo test hardware -- --ignored"]
+    fn test_print_hardware_info() {
+        println!("\n=== Hardware Detection Test ===");
+
+        let is_jetson_device = is_jetson();
+        println!("Is Jetson: {}", is_jetson_device);
+
+        if !is_jetson_device {
+            println!("Not running on Jetson device - limited info available");
+        }
+
+        let model = detect_board_model();
+        println!("Board Model (from sysfs/model): {}", model);
+
+        let model_compat = detect_model_from_compatible();
+        println!("Board Model (from compatible): {}", model_compat);
+
+        let serial = detect_serial_number();
+        println!("Serial Number: {}", serial);
+
+        let arch = detect_architecture();
+        println!("Architecture: {}", arch);
+
+        let board = detect_board();
+        println!("\n=== Full Board Info ===");
+        println!("Model: {}", board.model);
+        println!("Jetpack: {}", board.jetpack);
+        println!("L4T: {}", board.l4t);
+        println!("Serial: {}", board.serial);
+
+        println!("\n=== Test Complete ===");
+    }
 }
