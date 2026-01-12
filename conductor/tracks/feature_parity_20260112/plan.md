@@ -37,9 +37,6 @@
   - [x] Marked hardware test as #[ignore] for non-Jetson systems
   - [x] All unit tests pass (6 passed, 1 ignored)
 
-
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Hardware Detection Enhancement' (Protocol in workflow.md)
-
 ## Phase 2: Core Monitoring Modules
 
 ### Tasks
