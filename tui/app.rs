@@ -30,6 +30,10 @@ pub struct TuiApp {
     control_screen: ControlScreen,
     info_screen: InfoScreen,
     cpu_screen: CpuScreen,
+    gpu_screen: GpuScreen,
+    memory_screen: MemoryScreen,
+    power_screen: PowerScreen,
+    temperature_screen: TemperatureScreen,
     stats: Option<JetsonStats>,
     should_exit: bool,
     tick_rate: Duration,
@@ -57,6 +61,10 @@ impl TuiApp {
             control_screen: ControlScreen::new(),
             info_screen: InfoScreen::new(),
             cpu_screen: CpuScreen::new(),
+            gpu_screen: GpuScreen::new(),
+            memory_screen: MemoryScreen::new(),
+            power_screen: PowerScreen::new(),
+            temperature_screen: TemperatureScreen::new(),
             stats: None,
             should_exit: false,
             tick_rate: Duration::from_millis(250),
@@ -142,7 +150,7 @@ impl TuiApp {
             .map(|c| c.governor.clone())
             .unwrap_or_else(|| "unknown".to_string());
 
-        let info_stats = crate::tui::screens::InfoStats {
+         let info_stats = crate::tui::screens::InfoStats {
             board: stats.board,
             cpu_cores,
             cpu_governor,
@@ -172,6 +180,71 @@ impl TuiApp {
             },
         };
         self.cpu_screen.update(cpu_screen_stats);
+
+        // Update GPU screen with detailed stats
+        let full_gpu = gpu::GpuStats::get();
+        let gpu_screen_stats = crate::tui::screens::GpuScreenStats {
+            gpu: SimpleGpuStats {
+                usage: full_gpu.usage,
+                frequency: full_gpu.frequency,
+            },
+            temperature: SimpleTemperatureStats {
+                cpu: temperature::TemperatureStats::get().cpu,
+                gpu: full_gpu.temperature,
+            },
+            gpu_name: "NVIDIA GPU".to_string(),
+            gpu_arch: "Unknown".to_string(),
+        };
+        self.gpu_screen.update(gpu_screen_stats);
+
+        // Update Memory screen with detailed stats
+        let full_memory = memory::MemoryStats::get();
+        let memory_screen_stats = crate::tui::screens::MemoryScreenStats {
+            memory: SimpleMemoryStats {
+                ram_used: full_memory.ram_used,
+                ram_total: full_memory.ram_total,
+                swap_used: full_memory.swap_used,
+                swap_total: full_memory.swap_total,
+            },
+            full_memory,
+        };
+        self.memory_screen.update(memory_screen_stats);
+
+        // Update Power screen with detailed stats
+        let full_power = power::PowerStats::get();
+        let power_screen_stats = crate::tui::screens::PowerScreenStats {
+            power: SimplePowerStats {
+                total: full_power.total,
+            },
+            rails: full_power.rails.into_iter().map(|r| crate::tui::screens::PowerRail {
+                name: r.name.clone(),
+                current: r.current,
+                voltage: r.voltage,
+                power: r.power,
+            }).collect(),
+        };
+        self.power_screen.update(power_screen_stats);
+
+        // Update Temperature screen with detailed stats
+        let full_temperature = temperature::TemperatureStats::get();
+        let temp_screen_stats = crate::tui::screens::TemperatureScreenStats {
+            temperature: SimpleTemperatureStats {
+                cpu: full_temperature.cpu,
+                gpu: full_temperature.gpu,
+            },
+            zones: full_temperature.thermal_zones.into_iter().map(|z| crate::tui::screens::ThermalZone {
+                name: z.name.clone(),
+                current_temp: z.current_temp,
+                max_temp: z.max_temp,
+                critical_temp: z.critical_temp,
+                usage_percent: if z.critical_temp > 0.0 {
+                    ((z.current_temp / z.critical_temp) * 100.0) as u16
+                } else {
+                    0
+                },
+            }).collect(),
+        };
+        self.temperature_screen.update(temp_screen_stats);
 
         let _ = self.draw();
     }
@@ -281,6 +354,33 @@ impl TuiApp {
                 ScreenState::All => {
                     self.all_screen.draw(f);
                 }
+                ScreenState::Cpu => {
+                    self.cpu_screen.draw(f);
+                }
+                ScreenState::Gpu => {
+                    self.gpu_screen.draw(f);
+                }
+                ScreenState::Memory => {
+                    self.memory_screen.draw(f);
+                }
+                ScreenState::Power => {
+                    self.power_screen.draw(f);
+                }
+                ScreenState::Temperature => {
+                    self.temperature_screen.draw(f);
+                }
+                ScreenState::Control => {
+                    self.control_screen.draw(f);
+                }
+                ScreenState::Info => {
+                    self.info_screen.draw(f);
+                }
+            }
+        })?;
+
+        self.terminal.flush()?;
+        Ok(())
+    }
                 ScreenState::Cpu => {
                     self.cpu_screen.draw(f);
                 }

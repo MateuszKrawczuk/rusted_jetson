@@ -39,8 +39,8 @@ pub use modules::{
     gpu::GpuStats,
     memory::MemoryStats,
     fan::FanStats,
-    temperature::TemperatureStats,
-    power::PowerStats,
+    temperature::{TemperatureStats, ThermalZone},
+    power::{PowerStats, PowerRail},
     hardware::BoardInfo,
 };
 
