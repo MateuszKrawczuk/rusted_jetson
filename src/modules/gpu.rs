@@ -4,10 +4,15 @@
 //! GPU monitoring module
 //!
 //! Provides GPU statistics including usage, frequency, temperature, and governor information
-//! using sysfs devfreq interface for NVIDIA Jetson devices.
+//! using sysfs devfreq interface or NVML for NVIDIA Jetson devices.
 
 use std::fs;
 use std::path::Path;
+
+#[cfg(feature = "nvml")]
+use nvml_wrapper as nvml;
+
+use crate::modules::hardware::detect_board;
 
 /// GPU statistics
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
@@ -31,8 +36,20 @@ impl GpuStats {
     /// `/sys/class/thermal` for temperature.
     ///
     /// Supports NVIDIA Thor (tegra264) via `gpu-gpc-0` and `gpu-nvd-0` devfreq paths.
+    ///
+    /// For JetPack 7.0+ (Thor), uses NVML if available for more accurate statistics.
     pub fn get() -> Self {
         let mut stats = GpuStats::default();
+
+        #[cfg(feature = "nvml")]
+        {
+            // Check if we should use NVML (JetPack 7.0+)
+            if should_use_nvml() {
+                if let Ok(nvml_stats) = get_nvml_stats() {
+                    return nvml_stats;
+                }
+            }
+        }
 
         // Try to read from devfreq
         if let Some(devfreq_path) = find_gpu_devfreq() {
@@ -305,6 +322,22 @@ mod tests {
             }
         }
     }
+
+    #[cfg(feature = "nvml")]
+    #[test]
+    fn test_nvml_support() {
+        #[allow(unused_imports)]
+        use crate::modules::hardware::detect_board;
+
+        let board = detect_board();
+
+        if board.l4t.starts_with("38.") || board.l4t.starts_with("39.") {
+            println!(
+                "L4T {} detected (JetPack 7.0+), NVML should be available",
+                board.l4t
+            );
+        }
+    }
 }
 
 /// Read GPU temperature
@@ -331,6 +364,68 @@ fn read_gpu_temp() -> f32 {
                         if let Ok(temp_milli) = temp_str.trim().parse::<i32>() {
                             return temp_milli as f32 / 1000.0;
                         }
+                    }
+
+                    #[cfg(feature = "nvml")]
+                    fn should_use_nvml() -> bool {
+                        // Check if JetPack 7.0 or newer by reading L4T version
+                        let board = detect_board();
+
+                        // Parse L4T version to get major.minor
+                        // L4T format: "36.4.0" or "38.2.0"
+                        let parts: Vec<&str> = board.l4t.split('.').collect();
+                        if parts.len() >= 2 {
+                            if let Ok(major) = parts[0].parse::<u32>() {
+                                if let Ok(minor) = parts[1].parse::<u32>() {
+                                    // L4T 36.x corresponds to JetPack 6.x
+                                    // L4T 38.x corresponds to JetPack 7.x
+                                    // So L4T >= 38.0 means JetPack 7.0+
+                                    return major > 38 || (major == 38 && minor >= 0);
+                                }
+                            }
+                        }
+
+                        false
+                    }
+
+                    #[cfg(feature = "nvml")]
+                    fn get_nvml_stats() -> anyhow::Result<GpuStats> {
+                        let mut stats = GpuStats::default();
+
+                        // Initialize NVML
+                        nvml::nvmlInit()?;
+
+                        // Get device count
+                        let device_count = nvml::nvmlDeviceGetCount()?;
+
+                        if device_count == 0 {
+                            nvml::nvmlShutdown()?;
+                            anyhow::bail!("No NVML devices found");
+                        }
+
+                        // Get first device
+                        let device = nvml::nvmlDeviceGetHandleByIndex(0)?;
+
+                        // Get utilization
+                        let utilization = nvml::nvmlDeviceGetUtilizationRates(device)?;
+                        stats.usage = utilization.gpu as f32;
+
+                        // Get temperature
+                        let temp =
+                            nvml::nvmlDeviceGetTemperature(device, nvml::NVML_TEMPERATURE_GPU)?;
+                        stats.temperature = temp as f32;
+
+                        // Get clock info (SM clock)
+                        let clock_info = nvml::nvmlDeviceGetClockInfo(device, nvml::NVML_CLOCK_SM)?;
+                        stats.frequency = clock_info.clock as u32;
+
+                        // Governor is always "nvml" when using NVML
+                        stats.governor = "nvml".to_string();
+
+                        // Shutdown NVML
+                        nvml::nvmlShutdown()?;
+
+                        Ok(stats)
                     }
                 }
             }
