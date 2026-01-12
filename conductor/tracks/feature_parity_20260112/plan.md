@@ -73,15 +73,15 @@
   - [ ] Write tests for nvidia-smi parsing
   - [x] Write tests for NVIDIA Thor GPU (tegra264) support
 
-- [~] Task: Implement GPU monitoring module
+- [x] Task: Implement GPU monitoring module [cdfab36]
   - [ ] Implement GPU usage reading via nvidia-smi command
   - [x] Implement GPU frequency detection from sysfs
   - [x] Implement GPU frequency limits reading
   - [ ] Implement GPU process tracking via nvidia-smi pmon
   - [ ] Add nvidia-smi output parsing
   - [x] Add support for NVIDIA Thor GPU (tegra264) with CUDA 13.0+
-  - [ ] Add NVML support for JetPack 7.0+ (Thor)
-  - [ ] Handle nvidia-smi unavailability gracefully
+  - [x] Add NVML support for JetPack 7.0+ (Thor)
+  - [x] Handle nvidia-smi unavailability gracefully
 
 - [ ] Task: Write tests for memory monitoring module
   - [ ] Write tests for RAM usage reading
