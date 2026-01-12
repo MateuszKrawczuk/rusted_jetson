@@ -2,11 +2,16 @@
 // Copyright (C) 2026 Mateusz Krawczuk with work <m.krawczuk@cybrixsystems.com>
 
 //! CPU monitoring module
+//!
+//! Provides CPU statistics, core information, and performance metrics
+//! with both synchronous and asynchronous I/O support.
 
 use std::fs;
 use std::io::BufRead;
 use std::io::BufReader;
 use std::path::Path;
+
+use tokio::fs as tokio_fs;
 
 /// CPU statistics
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
@@ -26,6 +31,11 @@ pub struct CpuCore {
 }
 
 impl CpuStats {
+    /// Get current CPU statistics synchronously
+    ///
+    /// Returns a `CpuStats` struct containing:
+    /// - Overall CPU usage (average of all cores)
+    /// - List of individual cores with their usage, frequency, and governor
     pub fn get() -> Self {
         let mut stats = CpuStats::default();
 
@@ -41,12 +51,63 @@ impl CpuStats {
 
         stats
     }
+
+    /// Get current CPU statistics asynchronously
+    ///
+    /// Returns a `CpuStats` struct containing:
+    /// - Overall CPU usage (average of all cores)
+    /// - List of individual cores with their usage, frequency, and governor
+    ///
+    /// This is the async version of `get()` using tokio for I/O.
+    pub async fn get_async() -> Self {
+        let mut stats = CpuStats::default();
+
+        if let Ok(cores) = read_cpu_cores_async().await {
+            stats.cores = cores;
+        }
+
+        stats.usage = if !stats.cores.is_empty() {
+            stats.cores.iter().map(|c| c.usage).sum::<f32>() / stats.cores.len() as f32
+        } else {
+            0.0
+        };
+
+        stats
+    }
 }
 
-/// Get number of CPU cores
+/// Get number of CPU cores synchronously
+///
+/// Reads `/proc/cpuinfo` and counts the number of processor lines.
+/// Falls back to `num_cpus::get()` if reading fails.
+///
+/// # Returns
+/// The number of CPU cores available on the system.
 pub fn get_core_count() -> usize {
     let path = Path::new("/proc/cpuinfo");
     if let Ok(content) = fs::read_to_string(path) {
+        content
+            .lines()
+            .filter(|line| line.starts_with("processor"))
+            .count()
+    } else {
+        // Fallback to environment
+        num_cpus::get()
+    }
+}
+
+/// Get number of CPU cores asynchronously
+///
+/// Reads `/proc/cpuinfo` and counts the number of processor lines.
+/// Falls back to `num_cpus::get()` if reading fails.
+///
+/// # Returns
+/// The number of CPU cores available on the system.
+///
+/// This is the async version of `get_core_count()` using tokio for I/O.
+pub async fn get_core_count_async() -> usize {
+    let path = Path::new("/proc/cpuinfo");
+    if let Ok(content) = tokio_fs::read_to_string(path).await {
         content
             .lines()
             .filter(|line| line.starts_with("processor"))
@@ -98,10 +159,91 @@ fn read_cpu_cores() -> anyhow::Result<Vec<CpuCore>> {
     Ok(cores)
 }
 
+/// Read CPU information from /proc/cpuinfo (async)
+async fn read_cpu_cores_async() -> anyhow::Result<Vec<CpuCore>> {
+    let path = Path::new("/proc/cpuinfo");
+    let content = tokio_fs::read_to_string(path).await?;
+
+    let mut cores = Vec::new();
+    let mut current_core: Option<usize> = None;
+
+    for line in content.lines() {
+        if let Some((key, value)) = line.split_once(':') {
+            match key.trim() {
+                "processor" => {
+                    current_core = Some(value.trim().parse().unwrap_or(0));
+                }
+                "cpu MHz" => {
+                    if let Some(idx) = current_core {
+                        let freq = value.trim().parse().unwrap_or(0);
+                        cores.push(CpuCore {
+                            index: idx,
+                            frequency: (freq as u32) * 1_000_000,
+                            usage: 0.0,
+                            governor: get_governor_async(idx).await,
+                        });
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    // Calculate CPU usage from /proc/stat
+    if let Ok(usage_vec) = read_cpu_usage_async(&cores).await {
+        for (core, usage) in cores.iter_mut().zip(usage_vec.iter()) {
+            core.usage = *usage;
+        }
+    }
+
+    Ok(cores)
+}
+
 /// Read CPU usage from /proc/stat
 fn read_cpu_usage(cores: &[CpuCore]) -> anyhow::Result<Vec<f32>> {
     let path = Path::new("/proc/stat");
     let content = fs::read_to_string(path)?;
+
+    let mut usage = vec![0.0; cores.len()];
+
+    for line in content.lines() {
+        if line.starts_with("cpu") {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+
+            // Skip "cpu" (aggregate) line
+            if parts[0] == "cpu" {
+                continue;
+            }
+
+            // Extract core index
+            if let Some(idx_str) = parts[0].strip_prefix("cpu") {
+                if let Ok(idx) = idx_str.parse::<usize>() {
+                    if idx < usage.len() {
+                        // Parse CPU time fields
+                        if parts.len() >= 5 {
+                            let user: u64 = parts[1].parse().unwrap_or(0);
+                            let nice: u64 = parts[2].parse().unwrap_or(0);
+                            let system: u64 = parts[3].parse().unwrap_or(0);
+                            let idle: u64 = parts[4].parse().unwrap_or(0);
+
+                            let total = user + nice + system + idle;
+                            if total > 0 {
+                                usage[idx] = ((user + nice + system) as f32 / total as f32) * 100.0;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(usage)
+}
+
+/// Read CPU usage from /proc/stat (async)
+async fn read_cpu_usage_async(cores: &[CpuCore]) -> anyhow::Result<Vec<f32>> {
+    let path = Path::new("/proc/stat");
+    let content = tokio_fs::read_to_string(path).await?;
 
     let mut usage = vec![0.0; cores.len()];
 
@@ -148,6 +290,21 @@ fn get_governor(core_idx: usize) -> String {
     let path = Path::new(&path_str);
 
     fs::read_to_string(path)
+        .ok()
+        .map(|s| s.trim().to_string())
+        .unwrap_or_else(|| "unknown".to_string())
+}
+
+/// Get CPU frequency governor (async)
+async fn get_governor_async(core_idx: usize) -> String {
+    let path_str = format!(
+        "/sys/devices/system/cpu/cpu{}/cpufreq/scaling_governor",
+        core_idx
+    );
+    let path = Path::new(&path_str);
+
+    tokio_fs::read_to_string(path)
+        .await
         .ok()
         .map(|s| s.trim().to_string())
         .unwrap_or_else(|| "unknown".to_string())
@@ -321,5 +478,24 @@ mod tests {
         }
 
         println!("\n=== Test Complete ===");
+    }
+
+    #[tokio::test]
+    async fn test_get_core_count_async() {
+        let count = get_core_count_async().await;
+        assert!(count > 0, "Core count should be at least 1");
+    }
+
+    #[tokio::test]
+    async fn test_cpu_stats_get_async() {
+        let stats = CpuStats::get_async().await;
+
+        if !stats.cores.is_empty() {
+            assert!(
+                stats.usage >= 0.0 && stats.usage <= 100.0,
+                "Usage should be between 0 and 100"
+            );
+            assert!(!stats.cores.is_empty(), "Should have at least one core");
+        }
     }
 }
