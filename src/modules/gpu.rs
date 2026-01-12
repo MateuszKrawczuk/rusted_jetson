@@ -7,7 +7,7 @@ use std::fs;
 use std::path::Path;
 
 /// GPU statistics
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct GpuStats {
     pub usage: f32,
     pub frequency: u32,
@@ -44,9 +44,9 @@ fn find_gpu_devfreq() -> Option<String> {
 
     // Known GPU devfreq paths
     let candidates = [
-        "gpu-gpc-0",   // Thor GPC
-        "gpu-nvd-0",   // Thor NVD
-        "gpu",          // Generic
+        "gpu-gpc-0", // Thor GPC
+        "gpu-nvd-0", // Thor NVD
+        "gpu",       // Generic
     ];
 
     for candidate in &candidates {

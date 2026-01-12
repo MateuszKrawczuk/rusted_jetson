@@ -7,7 +7,7 @@ use std::fs;
 use std::path::Path;
 
 /// Jetson board information
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct BoardInfo {
     pub model: String,
     pub jetpack: String,
@@ -84,6 +84,5 @@ fn detect_model_from_devicetree() -> String {
 
 /// Check if running on a Jetson device
 pub fn is_jetson() -> bool {
-    Path::new("/etc/nv_tegra_release").exists()
-        || Path::new("/sys/module/tegra_fuse").exists()
+    Path::new("/etc/nv_tegra_release").exists() || Path::new("/sys/module/tegra_fuse").exists()
 }

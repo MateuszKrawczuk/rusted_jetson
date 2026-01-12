@@ -13,18 +13,28 @@ use ratatui::{
 };
 
 use crate::{
-    cpu::CpuStats as FullCpuStats, fan::FanStats as FullFanStats,
-    temperature::TemperatureStats as FullTemperatureStats, SimpleCpuStats, SimpleFanStats,
-    SimpleTemperatureStats,
+    cpu::CpuStats,
+    fan::FanStats,
+    temperature::TemperatureStats,
 };
-
-use crate::{SimpleCpuStats, SimpleFanStats, SimpleTemperatureStats};
 
 /// CPU screen - detailed CPU monitoring
 pub struct CpuScreen {
-    stats: Option<CpuScreenStats>,
+    stats: Option<CpuStats>,
     selected_core: usize,
 }
+
+impl CpuScreen {
+    pub fn new() -> Self {
+        Self {
+            stats: None,
+            selected_core: 0,
+        }
+    }
+
+    pub fn update(&mut self, stats: CpuStats) {
+        self.stats = Some(stats);
+    }
 
 #[derive(Debug, Clone)]
 struct CpuScreenStats {
@@ -156,7 +166,7 @@ impl CpuScreen {
         };
 
         let footer_text = format!("q: quit | 1-8: screens | h: help | {}", fan_temp);
-        let paragraph = Paragraph::new(footer_text.as_str())
+        let paragraph = Paragraph::new(footer_text)
             .block(Block::default().borders(Borders::ALL))
             .alignment(Alignment::Center);
         f.render_widget(paragraph, area);

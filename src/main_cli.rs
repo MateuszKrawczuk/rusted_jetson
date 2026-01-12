@@ -3,8 +3,8 @@
 
 //! rusted-jetsons CLI - rjtop-cli (no TUI)
 
-use std::path::PathBuf;
 use clap::Parser;
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]

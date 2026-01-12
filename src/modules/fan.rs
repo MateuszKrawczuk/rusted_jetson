@@ -7,9 +7,9 @@ use std::fs;
 use std::path::Path;
 
 /// Fan statistics
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize)]
 pub struct FanStats {
-    pub speed: u8,      // 0-100%
+    pub speed: u8, // 0-100%
     pub rpm: u32,
     pub mode: FanMode,
     pub fans: Vec<FanInfo>,
@@ -47,7 +47,8 @@ impl FanStats {
 
         // Calculate overall speed and RPM
         if !stats.fans.is_empty() {
-            stats.speed = stats.fans.iter().map(|f| f.speed as u32).sum::<u32>() / stats.fans.len() as u32 as u8;
+            stats.speed = stats.fans.iter().map(|f| f.speed as u32).sum::<u32>()
+                / stats.fans.len() as u32 as u8;
             stats.rpm = stats.fans.iter().map(|f| f.rpm).sum::<u32>() / stats.fans.len() as u32;
         }
 
@@ -71,10 +72,7 @@ impl FanStats {
 
         // Set all cooling devices to manual mode
         for fan in read_cooling_devices(path) {
-            let fan_path = Path::new(&format!(
-                "/sys/class/thermal/cooling_device{}",
-                fan.index
-            ));
+            let fan_path = Path::new(&format!("/sys/class/thermal/cooling_device{}", fan.index));
 
             // Set to manual mode
             let mode_path = fan_path.join("cur_state");

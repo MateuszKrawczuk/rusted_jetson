@@ -7,7 +7,7 @@ use std::fs;
 use std::path::Path;
 
 /// Temperature statistics
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct TemperatureStats {
     pub cpu: f32,
     pub gpu: f32,

@@ -3,10 +3,12 @@
 
 //! CPU monitoring module
 
+use std::fs;
+use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::path::Path;
 
 /// CPU statistics
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct CpuStats {
     pub usage: f32,
     pub frequency: u32,
@@ -14,7 +16,7 @@ pub struct CpuStats {
 }
 
 /// Per-core CPU statistics
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct CpuCore {
     pub index: usize,
     pub usage: f32,

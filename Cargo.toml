@@ -25,6 +25,7 @@ thiserror = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 num_cpus = "1.16"
+fs = "1.0"
 
 # TUI dependencies
 ratatui = { version = "0.26", features = ["crossterm"], optional = true }
@@ -39,3 +40,23 @@ clap = { version = "4.5", features = ["derive"] }
 
 [dev-dependencies]
 tokio-test = "0.4"
+
+[features]
+default = ["tui"]
+tui = ["ratatui", "crossterm"]
+telemetry = ["opentelemetry_sdk", "opentelemetry-otlp"]
+full = ["tui", "telemetry"]
+
+[lib]
+name = "rusted_jetsons"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rjtop"
+path = "src/main.rs"
+required-features = ["tui"]
+
+[[bin]]
+name = "rjtop-cli"
+path = "src/main_cli.rs"
+required-features = []

@@ -7,7 +7,7 @@ use std::fs;
 use std::path::Path;
 
 /// Power statistics
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct PowerStats {
     pub total: f32,
     pub rails: Vec<PowerRail>,
@@ -17,9 +17,9 @@ pub struct PowerStats {
 #[derive(Debug, Clone, Default)]
 pub struct PowerRail {
     pub name: String,
-    pub current: f32,  // mA
-    pub voltage: f32,  // mV
-    pub power: f32,    // mW
+    pub current: f32, // mA
+    pub voltage: f32, // mV
+    pub power: f32,   // mW
 }
 
 impl PowerStats {
@@ -89,7 +89,7 @@ fn read_ina3221_rail(iio_path: &Path) -> Option<PowerRail> {
     let voltage_scale = read_sysfs_u32(iio_path, "in_voltage_scale").unwrap_or(1) as f32;
 
     // Calculate actual values
-    let current_mA = current_uA * current_scale / 1000.0;  // Convert to mA
+    let current_mA = current_uA * current_scale / 1000.0; // Convert to mA
     let voltage_mV = voltage_uV * voltage_scale / 1000.0; // Convert to mV
     let power_mW = (current_mA * voltage_mV) / 1000.0; // Convert to mW
 
