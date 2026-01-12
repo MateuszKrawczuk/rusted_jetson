@@ -49,12 +49,12 @@
 
 ### Tasks
 
-- [ ] Task: Write tests for CPU monitoring module
-  - [ ] Write tests for CPU core count detection
-  - [ ] Write tests for per-core usage reading
-  - [ ] Write tests for CPU frequency detection
-  - [ ] Write tests for governor state reading
-  - [ ] Write tests for CPU model info extraction
+- [x] Task: Write tests for CPU monitoring module [c49f89e]
+  - [x] Write tests for CPU core count detection
+  - [x] Write tests for per-core usage reading
+  - [x] Write tests for CPU frequency detection
+  - [x] Write tests for governor state reading
+  - [x] Write tests for CPU model info extraction
 
 - [ ] Task: Implement CPU monitoring module
   - [ ] Implement CPU core count detection from /proc/cpuinfo
