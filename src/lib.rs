@@ -23,73 +23,13 @@
 //! <https://github.com/rbonghi/jetson_stats>
 
 pub mod error;
-pub mod telemetry;
 pub mod modules;
+// pub mod telemetry;
 
-#[cfg(feature = "tui")]
-pub mod tui;
+// #[cfg(feature = "tui")]
+// pub mod tui;
 
-#[cfg(feature = "telemetry")]
-pub use telemetry::TelemetryExporter;
+// #[cfg(feature = "telemetry")]
+// pub use telemetry::TelemetryExporter;
 
 pub use error::{Error, Result};
-
-pub use modules::cpu::CpuStats;
-pub use modules::get_core_count;
-pub use modules::gpu::GpuStats;
-pub use modules::memory::MemoryStats;
-pub use modules::fan::FanStats;
-pub use modules::temperature::TemperatureStats;
-pub use modules::temperature::ThermalZone;
-pub use modules::power::PowerStats;
-pub use modules::power::PowerRail;
-pub use modules::hardware::BoardInfo;
-
-/// Main Jetson monitor structure
-pub struct JetsonMonitor {
-    interval: std::time::Duration,
-}
-
-impl JetsonMonitor {
-    /// Create a new Jetson monitor
-    pub fn new() -> Result<Self, Error> {
-        Ok(Self {
-            interval: std::time::Duration::from_secs(1),
-        })
-    }
-
-    /// Start monitoring
-    pub async fn start(&mut self) -> Result<(), Error> {
-        Ok(())
-    }
-}
-
-/// Jetson statistics structure
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct JetsonStats {
-    pub cpu: CpuStats,
-    pub gpu: GpuStats,
-    pub memory: MemoryStats,
-    pub fan: FanStats,
-    pub temperature: TemperatureStats,
-    pub power: PowerStats,
-    pub board: BoardInfo,
-}
-
-/// Simple CPU stats for TUI (imported from modules)
-pub use cpu::CpuStats;
-pub use gpu::GpuStats;
-pub use memory::MemoryStats;
-pub use fan::FanStats;
-pub use temperature::TemperatureStats;
-pub use power::PowerStats;
-pub use hardware::BoardInfo;
-
-/// Simple temperature stats (without zones for TUI)
-pub use temperature::{TemperatureStats as SimpleTemperatureStats};
-
-/// Simple power stats (without rails for TUI)
-pub use power::PowerStats as SimplePowerStats;
-
-/// Simple board info (without serial for TUI)
-pub use hardware::BoardInfo as SimpleBoardInfo;
