@@ -23,6 +23,13 @@
   - [x] Add compatible device tree parsing for Thor platform
   - [x] Add graceful fallback for unknown platforms
 
+- [x] Task: Fix build issues for library testing [51ffe0c]
+  - [x] Fixed unclosed delimiter in tui/screens/cpu_screen.rs
+  - [x] Fixed duplicate imports and syntax errors
+  - [x] Fixed crossterm import in tui/app.rs
+  - [x] Removed TUI from default features to allow library build
+  - [x] Verified library and CLI build successfully
+
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Hardware Detection Enhancement' (Protocol in workflow.md)
 
