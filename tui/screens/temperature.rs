@@ -8,33 +8,36 @@ use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Sparkline, Gauge},
+    widgets::{Block, Borders, Gauge, List, ListItem, Paragraph, Sparkline},
     Frame,
 };
 
-use crate::{
-    SimpleTemperatureStats,
-    temperature::TemperatureStats as FullTemperatureStats,
-};
+use crate::modules::TemperatureStats;
 
-/// Temperature screen - detailed temperature monitoring
-pub struct TemperatureScreen {
-    stats: Option<TemperatureScreenStats>,
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleTemperatureStats {
+    pub cpu: f32,
+    pub gpu: f32,
 }
 
-#[derive(Debug, Clone)]
-struct TemperatureScreenStats {
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct TemperatureScreenStats {
     pub temperature: SimpleTemperatureStats,
     pub zones: Vec<ThermalZone>,
 }
 
-#[derive(Debug, Clone)]
-struct ThermalZone {
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ThermalZone {
     pub name: String,
     pub current_temp: f32,
     pub max_temp: f32,
     pub critical_temp: f32,
     pub usage_percent: u16,
+}
+
+/// Temperature screen - detailed temperature monitoring
+pub struct TemperatureScreen {
+    stats: Option<TemperatureScreenStats>,
 }
 
 impl TemperatureScreen {
@@ -58,21 +61,22 @@ impl TemperatureScreen {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Temperature"),
-            );
+            .block(Block::default().borders(Borders::ALL).title("Temperature"));
         f.render_widget(paragraph, size);
     }
 
-    fn draw_content<B: Backend>(&self, f: &mut Frame<B>, stats: &TemperatureScreenStats) {
+    fn draw_content<B: Backend>(
+        &self,
+        f: &mut Frame<B>,
+        stats: &TemperatureScreenStats,
+        area: Rect,
+    ) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3),  // Header
-                Constraint::Min(0),     // Content
-                Constraint::Length(3),  // Footer
+                Constraint::Length(3), // Header
+                Constraint::Min(0),    // Content
+                Constraint::Length(3), // Footer
             ])
             .split(f.size());
 
@@ -82,36 +86,26 @@ impl TemperatureScreen {
     }
 
     fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
-        let header = Paragraph::new(vec![
-            Line::from(vec![
-                Span::styled(
-                    "rusted-jetsons",
-                    Style::default()
-                        .fg(Color::Green)
-                        .add_modifier(Modifier::BOLD),
-                ),
-                Span::raw(" | "),
-                Span::styled(
-                    "Temperature Details",
-                    Style::default().fg(Color::Gray),
-                ),
-            ]),
-        ])
+        let header = Paragraph::new(vec![Line::from(vec![
+            Span::styled(
+                "rusted-jetsons",
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" | "),
+            Span::styled("Temperature Details", Style::default().fg(Color::Gray)),
+        ])])
         .alignment(Alignment::Center);
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &TemperatureScreenStats,
-        area: Rect,
-    ) {
+    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &TemperatureScreenStats, area: Rect) {
         let body_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Length(25),  // Main temps
-                Constraint::Min(0),       // All zones
+                Constraint::Length(25), // Main temps
+                Constraint::Min(0),     // All zones
             ])
             .split(area);
 
@@ -126,14 +120,8 @@ impl TemperatureScreen {
         area: Rect,
     ) {
         let items = vec![
-            ListItem::new(format!(
-                "CPU: {:.1}°C",
-                stats.temperature.cpu
-            )),
-            ListItem::new(format!(
-                "GPU: {:.1}°C",
-                stats.temperature.gpu
-            )),
+            ListItem::new(format!("CPU: {:.1}°C", stats.temperature.cpu)),
+            ListItem::new(format!("GPU: {:.1}°C", stats.temperature.gpu)),
             ListItem::new(""),
             ListItem::new("Temperature graph not implemented yet"),
         ];
@@ -150,22 +138,14 @@ impl TemperatureScreen {
         f.render_widget(list, area);
     }
 
-    fn draw_all_zones<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &TemperatureScreenStats,
-        area: Rect,
-    ) {
+    fn draw_all_zones<B: Backend>(&self, f: &mut Frame<B>, stats: &TemperatureScreen, area: Rect) {
         let items: Vec<ListItem> = stats
             .zones
             .iter()
             .map(|zone| {
                 ListItem::new(format!(
                     "{:18} {:.1}°C / {:.1}°C ({}%)",
-                    zone.name,
-                    zone.current_temp,
-                    zone.max_temp,
-                    zone.usage_percent
+                    zone.name, zone.current_temp, zone.max_temp, zone.usage_percent
                 ))
             })
             .collect();
@@ -190,8 +170,7 @@ impl TemperatureScreen {
     ) {
         let footer_text = format!(
             "q: quit | 1-8: screens | h: help | CPU: {:.1}°C | GPU: {:.1}°C",
-            stats.temperature.cpu,
-            stats.temperature.gpu
+            stats.temperature.cpu, stats.temperature.gpu
         );
         let paragraph = Paragraph::new(footer_text.as_str())
             .block(Block::default().borders(Borders::ALL))

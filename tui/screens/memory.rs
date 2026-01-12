@@ -12,14 +12,11 @@ use ratatui::{
     Frame,
 };
 
-use crate::{
-    SimpleMemoryStats,
-    memory::MemoryStats as FullMemoryStats,
-};
+use crate::modules::MemoryStats;
 
-/// Memory screen - detailed memory monitoring
-pub struct MemoryScreen {
-    stats: Option<MemoryScreenStats>,
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleMemoryStats {
+    pub memory: MemoryStats,
 }
 
 #[derive(Debug, Clone)]
@@ -49,11 +46,7 @@ impl MemoryScreen {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("Memory"),
-            );
+            .block(Block::default().borders(Borders::ALL).title("Memory"));
         f.render_widget(paragraph, size);
     }
 
@@ -61,9 +54,9 @@ impl MemoryScreen {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(3),  // Header
-                Constraint::Min(0),     // Content
-                Constraint::Length(3),  // Footer
+                Constraint::Length(3), // Header
+                Constraint::Min(0),    // Content
+                Constraint::Length(3), // Footer
             ])
             .split(f.size());
 
@@ -73,36 +66,26 @@ impl MemoryScreen {
     }
 
     fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
-        let header = Paragraph::new(vec![
-            Line::from(vec![
-                Span::styled(
-                    "rusted-jetsons",
-                    Style::default()
-                        .fg(Color::Green)
-                        .add_modifier(Modifier::BOLD),
-                ),
-                Span::raw(" | "),
-                Span::styled(
-                    "Memory Details",
-                    Style::default().fg(Color::Gray),
-                ),
-            ]),
-        ])
+        let header = Paragraph::new(vec![Line::from(vec![
+            Span::styled(
+                "rusted-jetsons",
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::raw(" | "),
+            Span::styled("Memory Details", Style::default().fg(Color::Gray)),
+        ])])
         .alignment(Alignment::Center);
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &MemoryScreenStats,
-        area: Rect,
-    ) {
+    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &MemoryScreenStats, area: Rect) {
         let body_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Length(30),  // Memory bars
-                Constraint::Min(0),       // Details
+                Constraint::Length(30), // Memory bars
+                Constraint::Min(0),     // Details
             ])
             .split(area);
 
@@ -119,10 +102,10 @@ impl MemoryScreen {
         let mem_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(7),  // RAM
-                Constraint::Length(7),  // SWAP
-                Constraint::Length(5),  // IRAM
-                Constraint::Min(0),     // Spacer
+                Constraint::Length(7), // RAM
+                Constraint::Length(7), // SWAP
+                Constraint::Length(5), // IRAM
+                Constraint::Min(0),    // Spacer
             ])
             .split(area);
 
@@ -133,11 +116,7 @@ impl MemoryScreen {
             0
         };
         let ram_gauge = Gauge::default()
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("RAM"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("RAM"))
             .gauge_style(Style::default().fg(Color::Green))
             .percent(ram_percent)
             .label(format!(
@@ -154,11 +133,7 @@ impl MemoryScreen {
             0
         };
         let swap_gauge = Gauge::default()
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title("SWAP"),
-            )
+            .block(Block::default().borders(Borders::ALL).title("SWAP"))
             .gauge_style(Style::default().fg(Color::Yellow))
             .percent(swap_percent)
             .label(format!(
@@ -174,18 +149,10 @@ impl MemoryScreen {
             let iram_used = stats.full_memory.iram_used;
             let iram_percent = (iram_used * 100 / iram_total) as u16;
             let iram_gauge = Gauge::default()
-                .block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .title("IRAM"),
-                )
+                .block(Block::default().borders(Borders::ALL).title("IRAM"))
                 .gauge_style(Style::default().fg(Color::Cyan))
                 .percent(iram_percent)
-                .label(format!(
-                    "{}KB / {}KB",
-                    iram_used / 1024,
-                    iram_total / 1024
-                ));
+                .label(format!("{}KB / {}KB", iram_used / 1024, iram_total / 1024));
             f.render_widget(iram_gauge, mem_chunks[2]);
         }
     }
@@ -238,12 +205,7 @@ impl MemoryScreen {
         f.render_widget(list, area);
     }
 
-    fn draw_footer<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &MemoryScreenStats,
-        area: Rect,
-    ) {
+    fn draw_footer<B: Backend>(&self, f: &mut Frame<B>, stats: &MemoryScreenStats, area: Rect) {
         let footer_text = "q: quit | 1-8: screens | h: help";
         let paragraph = Paragraph::new(footer_text)
             .block(Block::default().borders(Borders::ALL))

@@ -12,10 +12,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::{
-    gpu::GpuStats as FullGpuStats, temperature::TemperatureStats as FullTemperatureStats,
-    SimpleGpuStats, SimpleTemperatureStats,
-};
+use crate::{modules::GpuStats, modules::TemperatureStats};
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct GpuScreenStats {
@@ -23,6 +20,18 @@ pub struct GpuScreenStats {
     pub temperature: SimpleTemperatureStats,
     pub gpu_name: String,
     pub gpu_arch: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleGpuStats {
+    pub usage: f32,
+    pub frequency: u32,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleTemperatureStats {
+    pub cpu: f32,
+    pub gpu: f32,
 }
 
 /// GPU screen - detailed GPU monitoring

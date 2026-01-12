@@ -13,6 +13,11 @@ use ratatui::{
 };
 
 use crate::{
+    modules::{CpuStats, FanStats, TemperatureStats},
+    SimpleCpuStats, SimpleFanStats, SimpleTemperatureStats,
+};
+
+use crate::{
     cpu::CpuStats,
     fan::FanStats,
     temperature::TemperatureStats,

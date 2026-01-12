@@ -34,15 +34,16 @@ pub use telemetry::TelemetryExporter;
 
 pub use error::{Error, Result};
 
-pub use modules::{
-    cpu::{CpuStats, get_core_count},
-    gpu::GpuStats,
-    memory::MemoryStats,
-    fan::FanStats,
-    temperature::{TemperatureStats, ThermalZone},
-    power::{PowerStats, PowerRail},
-    hardware::BoardInfo,
-};
+pub use modules::cpu::CpuStats;
+pub use modules::get_core_count;
+pub use modules::gpu::GpuStats;
+pub use modules::memory::MemoryStats;
+pub use modules::fan::FanStats;
+pub use modules::temperature::TemperatureStats;
+pub use modules::temperature::ThermalZone;
+pub use modules::power::PowerStats;
+pub use modules::power::PowerRail;
+pub use modules::hardware::BoardInfo;
 
 /// Main Jetson monitor structure
 pub struct JetsonMonitor {
