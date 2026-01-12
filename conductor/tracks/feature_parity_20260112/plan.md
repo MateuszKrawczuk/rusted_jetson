@@ -30,6 +30,13 @@
   - [x] Removed TUI from default features to allow library build
   - [x] Verified library and CLI build successfully
 
+- [x] Task: Improve hardware tests [87dd289]
+  - [x] Fixed L4T version parsing tests with correct format
+  - [x] Fixed smart quotes causing compilation errors
+  - [x] Added test_print_hardware_info() to display device information
+  - [x] Marked hardware test as #[ignore] for non-Jetson systems
+  - [x] All unit tests pass (6 passed, 1 ignored)
+
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Hardware Detection Enhancement' (Protocol in workflow.md)
 
