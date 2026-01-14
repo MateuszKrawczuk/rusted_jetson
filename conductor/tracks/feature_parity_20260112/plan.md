@@ -181,6 +181,155 @@
 - Thor: 14 cooling devices, 5 thermal zones detected
 - Xavier: 9 cooling devices, 8 thermal zones detected
 
+**Manual Verification Plan for Phase 2: Core Monitoring Modules**
+
+Please verify all core monitoring modules on your Jetson devices via SSH:
+
+### 1. Verify All Modules Compile and Run Tests
+```bash
+# On Thor (10.0.20.93)
+ssh mkrawczuk@10.0.20.93 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test --lib"
+
+# On Xavier (10.0.20.211)
+ssh mkrawczuk@10.0.20.211 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test --lib"
+```
+
+**Expected:** All 106 tests pass with 13 ignored (hardware-specific tests)
+
+### 2. Verify CPU Monitoring
+```bash
+ssh mkrawczuk@10.0.20.93 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_cpu_info --lib -- --ignored --nocapture"
+ssh mkrawczuk@10.0.20.211 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_cpu_info --lib -- --ignored --nocapture"
+```
+
+**Expected:** CPU core count, usage, frequency, and governor displayed correctly
+
+### 3. Verify GPU Monitoring
+```bash
+ssh mkrawczuk@10.0.20.93 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_gpu_info --lib -- --ignored --nocapture"
+ssh mkrawczuk@10.0.20.211 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_gpu_info --lib -- --ignored --nocapture"
+```
+
+**Expected:** GPU usage, frequency, and limits displayed; nvidia-smi detected correctly
+
+### 4. Verify Memory Monitoring
+```bash
+ssh mkrawczuk@10.0.20.93 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_memory_info --lib -- --ignored --nocapture"
+ssh mkrawczuk@10.0.20.211 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_memory_info --lib -- --ignored --nocapture"
+```
+
+**Expected:** RAM, swap, EMC frequency, and IRAM displayed correctly
+
+### 5. Verify Fan Monitoring
+```bash
+ssh mkrawczuk@10.0.20.93 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_fan_info --lib -- --ignored --nocapture"
+ssh mkrawczuk@10.0.20.211 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_fan_info --lib -- --ignored --nocapture"
+```
+
+**Expected:** All cooling devices detected with speeds and RPM values
+
+### 6. Verify Temperature Monitoring
+```bash
+ssh mkrawczuk@10.0.20.93 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_temperature_info --lib -- --ignored --nocapture"
+ssh mkrawczuk@10.0.20.211 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_temperature_info --lib -- --ignored --nocapture"
+```
+
+**Expected:** CPU, GPU, board temperatures displayed correctly; case-insensitive detection works
+
+### 7. Verify Power Monitoring
+```bash
+ssh mkrawczuk@10.0.20.93 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_power_info --lib -- --ignored --nocapture"
+ssh mkrawczuk@10.0.20.211 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_power_info --lib -- --ignored --nocapture"
+```
+
+**Expected:** INA3221 sensors detected with voltage, current, and power readings
+
+### 8. Verify Engine Monitoring
+```bash
+ssh mkrawczuk@10.0.20.93 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_engine_info --lib -- --ignored --nocapture"
+ssh mkrawczuk@10.0.20.211 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_engine_info --lib -- --ignored --nocapture"
+```
+
+**Expected:** APE, DLA, NVDEC, NVENC, NVJPG engines detected with status
+
+### 9. Verify Process Monitoring
+```bash
+ssh mkrawczuk@10.0.20.93 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_process_info --lib -- --ignored --nocapture"
+ssh mkrawczuk@10.0.20.211 "cd ~/rusted_jetsons && source ~/.cargo/env && cargo test test_print_process_info --lib -- --ignored --nocapture"
+```
+
+**Expected:** GPU processes detected via nvidia-smi pmon with GPU usage
+
+### 10. Compare with jtop (sysfs data)
+```bash
+# Read sysfs data directly (same source as jtop)
+# On Thor (L4T R38)
+ssh mkrawczuk@10.0.20.93 "python3 -c \"
+import glob
+import os
+
+print('=== Thermal Zones ===')
+thermal_zones = glob.glob('/sys/class/thermal/thermal_zone*')
+for zone in sorted(thermal_zones):
+    idx = zone.split('/')[-1]
+    type_file = os.path.join(zone, 'type')
+    temp_file = os.path.join(zone, 'temp')
+    
+    if os.path.exists(type_file):
+        with open(type_file) as f:
+            zone_type = f.read().strip()
+    if os.path.exists(temp_file):
+        with open(temp_file) as f:
+            temp_raw = int(f.read().strip())
+            temp_c = temp_raw / 1000.0
+            print(f'{idx} ({zone_type}): {temp_c:.1f}°C')
+
+print()
+print('=== Cooling Devices ===')
+cooling_devices = glob.glob('/sys/class/thermal/cooling_device*')
+for dev in sorted(cooling_devices)[:10]:
+    idx = dev.split('/')[-1]
+    cur_state_file = os.path.join(dev, 'cur_state')
+    max_state_file = os.path.join(dev, 'max_state')
+    
+    if os.path.exists(cur_state_file) and os.path.exists(max_state_file):
+        with open(cur_state_file) as f:
+            cur = int(f.read().strip())
+        with open(max_state_file) as f:
+            max_state = int(f.read().strip())
+        speed_pct = (cur / max_state * 100) if max_state > 0 else 0
+        print(f'{idx}: {speed_pct:.1f}% ({cur}/{max_state})')
+\" 2>&1"
+
+# On Xavier (L4T R35)
+ssh mkrawczuk@10.0.20.211 "python3 -c \"
+import glob
+import os
+
+print('=== Thermal Zones ===')
+thermal_zones = glob.glob('/sys/class/thermal/thermal_zone*')
+for zone in sorted(thermal_zones):
+    idx = zone.split('/')[-1]
+    type_file = os.path.join(zone, 'type')
+    temp_file = os.path.join(zone, 'temp')
+    
+    if os.path.exists(type_file):
+        with open(type_file) as f:
+            zone_type = f.read().strip()
+    if os.path.exists(temp_file):
+        with open(temp_file) as f:
+            temp_raw = int(f.read().strip())
+            temp_c = temp_raw / 1000.0
+            print(f'{idx} ({zone_type}): {temp_c:.1f}°C')
+\" 2>&1"
+```
+
+**Expected:** Same thermal zones and cooling devices detected as rusted-jetsons (both read from same sysfs source)
+
+---
+
+**Does this meet your expectations? Please confirm with yes or provide feedback on what needs to be changed.**
+
 ## Phase 3: Control Functionality
 
 ### Tasks
