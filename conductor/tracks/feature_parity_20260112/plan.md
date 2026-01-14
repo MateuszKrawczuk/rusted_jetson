@@ -349,10 +349,10 @@ for zone in sorted(thermal_zones):
   - [x] Add error handling for nvpmodel command failures
   - [x] Ensure NVP model control works on all platforms
 
-- [~] Task: Write tests for jetson_clocks control
-  - [~] Write tests for jetson_clocks state reading
-  - [~] Write tests for jetson_clocks toggling
-  - [~] Write tests for jetson_clocks command execution
+- [x] Task: Write tests for jetson_clocks control [9842617]
+  - [x] Write tests for jetson_clocks state reading
+  - [x] Write tests for jetson_clocks toggling
+  - [x] Write tests for jetson_clocks command execution
 
 - [ ] Task: Implement jetson_clocks control
   - [ ] Implement current jetson_clocks state reading
