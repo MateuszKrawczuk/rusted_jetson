@@ -164,12 +164,12 @@
   - [x] Write tests for nvidia-smi pmon parsing
   - [x] Write tests for /proc/*/fd/ GPU device file checking
 
-- [ ] Task: Implement process monitoring module
-  - [ ] Implement GPU process detection via nvidia-smi pmon
-  - [ ] Implement process memory usage tracking
-  - [ ] Add nvidia-smi pmon output parsing
-  - [ ] Add /proc/*/fd/ GPU device file checking
-  - [ ] Handle process monitoring errors gracefully
+- [x] Task: Implement process monitoring module [fbb6972]
+  - [x] Implement GPU process detection via nvidia-smi pmon
+  - [x] Implement process memory usage tracking
+  - [x] Add nvidia-smi pmon output parsing
+  - [x] Add /proc/*/fd/ GPU device file checking
+  - [x] Handle process monitoring errors gracefully
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Core Monitoring Modules' (Protocol in workflow.md)
 
