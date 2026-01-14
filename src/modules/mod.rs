@@ -7,12 +7,12 @@ pub mod fan;
 pub mod gpu;
 pub mod hardware;
 pub mod memory;
+pub mod nvpmodel;
 pub mod power;
 pub mod processes;
 
 // Temporarily commented out - need to fix compilation errors
 // pub mod jetson_clocks;
-// pub mod nvpmodel;
 // pub mod tegra_stats;
 pub mod temperature;
 

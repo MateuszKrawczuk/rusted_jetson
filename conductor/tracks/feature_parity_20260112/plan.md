@@ -334,12 +334,12 @@ for zone in sorted(thermal_zones):
 
 ### Tasks
 
-- [ ] Task: Write tests for NVP model control
-  - [ ] Write tests for NVP model ID reading
-  - [ ] Write tests for NVP model list retrieval
-  - [ ] Write tests for NVP model setting
-  - [ ] Write tests for /etc/nvpmodel.conf parsing
-  - [ ] Write tests for nvpmodel command execution
+- [~] Task: Write tests for NVP model control
+  - [~] Write tests for NVP model ID reading
+  - [~] Write tests for NVP model list retrieval
+  - [~] Write tests for NVP model setting
+  - [~] Write tests for /etc/nvpmodel.conf parsing
+  - [~] Write tests for nvpmodel command execution
 
 - [ ] Task: Implement NVP model control
   - [ ] Implement current NVP model ID reading
