@@ -354,7 +354,7 @@ for zone in sorted(thermal_zones):
   - [x] Write tests for jetson_clocks toggling
   - [x] Write tests for jetson_clocks command execution
 
-- [x] Task: Implement jetson_clocks control [9842617]
+- [x] Task: Implement jetson_clocks control [ac945c6]
   - [x] Implement current jetson_clocks state reading
   - [x] Implement jetson_clocks toggling via command
   - [x] Add error handling for jetson_clocks command failures
