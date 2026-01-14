@@ -135,13 +135,13 @@
   - [x] Write tests for power calculation (voltage * current)
   - [x] Write tests for hwmon sysfs parsing
 
-- [ ] Task: Implement power monitoring module
-  - [ ] Implement INA3221 power sensor detection from /sys/bus/i2c
-  - [ ] Implement power rail voltage reading
-  - [ ] Implement power rail current reading
-  - [ ] Implement power calculation (voltage * current)
-  - [ ] Add hwmon sysfs parsing
-  - [ ] Handle missing power sensors gracefully
+- [x] Task: Implement power monitoring module [<hash>]
+  - [x] Implement INA3221 power sensor detection from /sys/bus/i2c
+  - [x] Implement power rail voltage reading
+  - [x] Implement power rail current reading
+  - [x] Implement power calculation (voltage * current)
+  - [x] Add hwmon sysfs parsing
+  - [x] Handle missing power sensors gracefully
 
 - [ ] Task: Write tests for engine monitoring module
   - [ ] Write tests for APE engine status reading
