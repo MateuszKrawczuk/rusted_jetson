@@ -150,13 +150,13 @@
   - [x] Write tests for NVENC engine status reading
   - [x] Write tests for engine clock detection
 
-- [ ] Task: Implement engine monitoring module
-  - [ ] Implement APE engine status reading
-  - [ ] Implement DLA engine status reading
-  - [ ] Implement NVDEC engine status reading
-  - [ ] Implement NVENC engine status reading
-  - [ ] Implement engine clock detection
-  - [ ] Handle unavailable engines gracefully
+- [x] Task: Implement engine monitoring module [1e13d8e]
+  - [x] Implement APE engine status reading
+  - [x] Implement DLA engine status reading
+  - [x] Implement NVDEC engine status reading
+  - [x] Implement NVENC engine status reading
+  - [x] Implement engine clock detection
+  - [x] Handle unavailable engines gracefully
 
 - [ ] Task: Write tests for process monitoring module
   - [ ] Write tests for GPU process detection
