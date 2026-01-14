@@ -84,29 +84,29 @@
   - [x] Handle nvidia-smi unavailability gracefully
 
 - [x] Task: Implement GPU monitoring module [cdfab36]
-  - [ ] Implement GPU usage reading via nvidia-smi command
+  - [x] Implement GPU usage reading via nvidia-smi command [538424f]
   - [x] Implement GPU frequency detection from sysfs
   - [x] Implement GPU frequency limits reading
-  - [ ] Implement GPU process tracking via nvidia-smi pmon
-  - [ ] Add nvidia-smi output parsing
+  - [x] Implement GPU process tracking via nvidia-smi pmon [538424f]
+  - [x] Add nvidia-smi output parsing [538424f]
   - [x] Add support for NVIDIA Thor GPU (tegra264) with CUDA 13.0+
   - [x] Add NVML support for JetPack 7.0+ (Thor)
   - [x] Handle nvidia-smi unavailability gracefully
 
-- [ ] Task: Write tests for memory monitoring module
-  - [ ] Write tests for RAM usage reading
-  - [ ] Write tests for swap usage reading
-  - [ ] Write tests for EMC frequency detection
-  - [ ] Write tests for IRAM usage detection
-  - [ ] Write tests for /proc/meminfo parsing
+- [x] Task: Write tests for memory monitoring module [87a2142]
+  - [x] Write tests for RAM usage reading [87a2142]
+  - [x] Write tests for swap usage reading [87a2142]
+  - [x] Write tests for EMC frequency detection [87a2142]
+  - [x] Write tests for IRAM usage detection [87a2142]
+  - [x] Write tests for /proc/meminfo parsing [87a2142]
 
-- [ ] Task: Implement memory monitoring module
-  - [ ] Implement RAM usage reading from /proc/meminfo
-  - [ ] Implement swap usage reading from /proc/swaps
-  - [ ] Implement EMC frequency detection from sysfs
-  - [ ] Implement IRAM usage detection
-  - [ ] Add /proc/meminfo parsing logic
-  - [ ] Ensure memory usage calculations are accurate
+- [x] Task: Implement memory monitoring module [87a2142]
+  - [x] Implement RAM usage reading from /proc/meminfo [87a2142]
+  - [x] Implement swap usage reading from /proc/swaps [87a2142]
+  - [x] Implement EMC frequency detection from sysfs [87a2142]
+  - [x] Implement IRAM usage detection [87a2142]
+  - [x] Add /proc/meminfo parsing logic [87a2142]
+  - [x] Ensure memory usage calculations are accurate [87a2142]
 
 - [ ] Task: Write tests for fan monitoring module
   - [ ] Write tests for fan speed reading
