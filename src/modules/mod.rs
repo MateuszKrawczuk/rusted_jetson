@@ -14,6 +14,6 @@ pub mod memory;
 // pub mod power;
 // pub mod processes;
 // pub mod tegra_stats;
-// pub mod temperature;
+pub mod temperature;
 
 pub use hardware::BoardInfo;

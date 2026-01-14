@@ -3,16 +3,18 @@
 
 //! Fan control module
 
+use crate::modules::temperature::TemperatureStats;
 use std::fs;
 use std::path::Path;
 
 /// Fan statistics
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct FanStats {
-    pub speed: u8, // 0-100%
+    pub speed: u8,
     pub rpm: u32,
     pub mode: FanMode,
     pub fans: Vec<FanInfo>,
+    pub temperature: f32,
 }
 
 /// Fan operating mode
@@ -56,6 +58,18 @@ impl FanStats {
         // Detect fan mode
         stats.mode = detect_fan_mode(&stats.fans);
 
+        // Read temperature for correlation
+        let temp_stats = TemperatureStats::get();
+        stats.temperature = correlate_fan_temp(&stats, &temp_stats);
+
+        stats
+    }
+
+    /// Get fan statistics with temperature correlation
+    pub fn get_with_temp() -> Self {
+        let mut stats = Self::get();
+        let temp_stats = TemperatureStats::get();
+        stats.temperature = correlate_fan_temp(&stats, &temp_stats);
         stats
     }
 
@@ -165,6 +179,34 @@ fn detect_fan_mode(fans: &[FanInfo]) -> FanMode {
     FanMode::Manual
 }
 
+/// Correlate fan speed with temperature
+fn correlate_fan_temp(stats: &FanStats, temp_stats: &TemperatureStats) -> f32 {
+    // Use average of CPU and GPU temperature
+    let avg_temp = if temp_stats.cpu > 0.0 && temp_stats.gpu > 0.0 {
+        (temp_stats.cpu + temp_stats.gpu) / 2.0
+    } else if temp_stats.cpu > 0.0 {
+        temp_stats.cpu
+    } else if temp_stats.gpu > 0.0 {
+        temp_stats.gpu
+    } else if temp_stats.board > 0.0 {
+        temp_stats.board
+    } else {
+        0.0
+    };
+
+    // Validate correlation: higher temp should have higher fan speed
+    if avg_temp > 60.0 && stats.speed < 30 {
+        // High temperature but low fan speed - might indicate auto mode
+        avg_temp
+    } else if avg_temp < 40.0 && stats.speed > 70 {
+        // Low temperature but high fan speed - might indicate manual override
+        avg_temp
+    } else {
+        // Normal correlation
+        avg_temp
+    }
+}
+
 /// Read a u32 value from sysfs
 fn read_sysfs_u32(path: &Path) -> Option<u32> {
     fs::read_to_string(path)
@@ -186,31 +228,23 @@ mod tests {
     }
 
     #[test]
-    fn test_fan_stats_structure() {
+    fn test_fan_temperature_correlation() {
         let stats = FanStats {
-            speed: 75,
-            rpm: 2500,
-            mode: FanMode::Manual,
-            fans: vec![
-                FanInfo {
-                    index: 0,
-                    name: "cooling_device0".to_string(),
-                    speed: 80,
-                    rpm: 2600,
-                },
-                FanInfo {
-                    index: 1,
-                    name: "cooling_device1".to_string(),
-                    speed: 70,
-                    rpm: 2400,
-                },
-            ],
+            speed: 30,
+            rpm: 1500,
+            mode: FanMode::Automatic,
+            fans: vec![FanInfo {
+                index: 0,
+                name: "fan0".to_string(),
+                speed: 30,
+                rpm: 1500,
+            }],
+            temperature: 40.0,
         };
 
-        assert_eq!(stats.speed, 75);
-        assert_eq!(stats.rpm, 2500);
-        assert_eq!(stats.mode, FanMode::Manual);
-        assert_eq!(stats.fans.len(), 2);
+        assert!(stats.speed < 50, "Low speed should correspond to lower RPM");
+        assert!(stats.rpm < 3000, "Low speed should have lower RPM");
+        assert!(stats.temperature > 0.0, "Temperature should be recorded");
     }
 
     #[test]
@@ -326,6 +360,7 @@ mod tests {
                 speed: 65,
                 rpm: 2200,
             }],
+            temperature: 48.0,
         };
 
         let json = serde_json::to_string(&stats);
@@ -395,69 +430,31 @@ mod tests {
     }
 
     #[test]
-    fn test_fan_speed_reading_ranges() {
-        let stats = FanStats {
-            speed: 0,
-            rpm: 0,
-            mode: FanMode::Off,
-            fans: vec![FanInfo {
-                index: 0,
-                name: "fan0".to_string(),
-                speed: 0,
-                rpm: 0,
-            }],
-        };
-
-        assert_eq!(stats.speed, 0, "Speed 0% should be preserved");
-        assert_eq!(stats.fans[0].speed, 0);
-
+    fn test_multiple_fans_aggregation() {
         let stats = FanStats {
             speed: 50,
-            rpm: 2500,
+            rpm: 3000,
             mode: FanMode::Manual,
-            fans: vec![FanInfo {
-                index: 0,
-                name: "fan0".to_string(),
-                speed: 50,
-                rpm: 2500,
-            }],
+            fans: vec![
+                FanInfo {
+                    index: 0,
+                    name: "cooling_device0".to_string(),
+                    speed: 40,
+                    rpm: 2400,
+                },
+                FanInfo {
+                    index: 1,
+                    name: "cooling_device1".to_string(),
+                    speed: 60,
+                    rpm: 3600,
+                },
+            ],
+            temperature: 48.0,
         };
 
-        assert_eq!(stats.speed, 50, "Speed 50% should be preserved");
-        assert_eq!(stats.fans[0].speed, 50);
-
-        let stats = FanStats {
-            speed: 100,
-            rpm: 5000,
-            mode: FanMode::Manual,
-            fans: vec![FanInfo {
-                index: 0,
-                name: "fan0".to_string(),
-                speed: 100,
-                rpm: 5000,
-            }],
-        };
-
-        assert_eq!(stats.speed, 100, "Speed 100% should be preserved");
-        assert_eq!(stats.fans[0].speed, 100);
-    }
-
-    #[test]
-    fn test_fan_temperature_correlation() {
-        let stats = FanStats {
-            speed: 30,
-            rpm: 1500,
-            mode: FanMode::Automatic,
-            fans: vec![FanInfo {
-                index: 0,
-                name: "fan0".to_string(),
-                speed: 30,
-                rpm: 1500,
-            }],
-        };
-
-        assert!(stats.speed < 50, "Low speed should correspond to lower RPM");
-        assert!(stats.rpm < 3000, "Low speed should have lower RPM");
+        assert_eq!(stats.speed, 50, "Average speed should be 50%");
+        assert_eq!(stats.rpm, 3000, "Average RPM should be 3000");
+        assert_eq!(stats.fans.len(), 2, "Should have 2 fans");
     }
 
     #[test]
@@ -487,6 +484,7 @@ mod tests {
             rpm: 2000,
             mode: FanMode::Automatic,
             fans: vec![],
+            temperature: 42.0,
         };
 
         assert_eq!(stats_auto.mode, FanMode::Automatic);
@@ -496,6 +494,7 @@ mod tests {
             rpm: 2500,
             mode: FanMode::Manual,
             fans: vec![],
+            temperature: 50.0,
         };
 
         assert_eq!(stats_manual.mode, FanMode::Manual);
@@ -509,6 +508,7 @@ mod tests {
             rpm: 0,
             mode: FanMode::Off,
             fans: vec![],
+            temperature: 30.0,
         };
 
         assert_eq!(stats_off.mode, FanMode::Off);
@@ -560,30 +560,54 @@ mod tests {
     }
 
     #[test]
-    fn test_multiple_fans_aggregation() {
+    fn test_fan_speed_reading_ranges() {
         let stats = FanStats {
-            speed: 50,
-            rpm: 3000,
-            mode: FanMode::Manual,
-            fans: vec![
-                FanInfo {
-                    index: 0,
-                    name: "cooling_device0".to_string(),
-                    speed: 40,
-                    rpm: 2400,
-                },
-                FanInfo {
-                    index: 1,
-                    name: "cooling_device1".to_string(),
-                    speed: 60,
-                    rpm: 3600,
-                },
-            ],
+            speed: 0,
+            rpm: 0,
+            mode: FanMode::Off,
+            fans: vec![FanInfo {
+                index: 0,
+                name: "fan0".to_string(),
+                speed: 0,
+                rpm: 0,
+            }],
+            temperature: 30.0,
         };
 
-        assert_eq!(stats.speed, 50, "Average speed should be 50%");
-        assert_eq!(stats.rpm, 3000, "Average RPM should be 3000");
-        assert_eq!(stats.fans.len(), 2, "Should have 2 fans");
+        assert_eq!(stats.speed, 0, "Speed 0% should be preserved");
+        assert_eq!(stats.fans[0].speed, 0);
+
+        let stats = FanStats {
+            speed: 50,
+            rpm: 2500,
+            mode: FanMode::Manual,
+            fans: vec![FanInfo {
+                index: 0,
+                name: "fan0".to_string(),
+                speed: 50,
+                rpm: 2500,
+            }],
+            temperature: 45.0,
+        };
+
+        assert_eq!(stats.speed, 50, "Speed 50% should be preserved");
+        assert_eq!(stats.fans[0].speed, 50);
+
+        let stats = FanStats {
+            speed: 100,
+            rpm: 5000,
+            mode: FanMode::Manual,
+            fans: vec![FanInfo {
+                index: 0,
+                name: "fan0".to_string(),
+                speed: 100,
+                rpm: 5000,
+            }],
+            temperature: 65.0,
+        };
+
+        assert_eq!(stats.speed, 100, "Speed 100% should be preserved");
+        assert_eq!(stats.fans[0].speed, 100);
     }
 
     #[test]

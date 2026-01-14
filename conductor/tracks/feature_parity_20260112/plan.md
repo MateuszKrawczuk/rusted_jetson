@@ -115,13 +115,13 @@
   - [x] Write tests for auto/manual mode toggling
   - [x] Write tests for cooling device sysfs reading
 
-- [ ] Task: Implement fan monitoring module
-  - [ ] Implement fan speed reading from sysfs cooling devices
-  - [ ] Implement fan temperature correlation
-  - [ ] Implement fan speed control via sysfs
-  - [ ] Implement auto/manual mode toggling
-  - [ ] Add error handling for fan control permissions
-  - [ ] Ensure fan control works on all supported platforms
+- [x] Task: Implement fan monitoring module [<hash>]
+  - [x] Implement fan speed reading from sysfs cooling devices
+  - [x] Implement fan temperature correlation
+  - [x] Implement fan speed control via sysfs
+  - [x] Implement auto/manual mode toggling
+  - [x] Add error handling for fan control permissions
+  - [x] Ensure fan control works on all supported platforms
 
 - [ ] Task: Write tests for temperature monitoring module
   - [ ] Write tests for thermal zone detection

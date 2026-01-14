@@ -7,7 +7,7 @@ use std::fs;
 use std::path::Path;
 
 /// Temperature statistics
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct TemperatureStats {
     pub cpu: f32,
     pub gpu: f32,
@@ -17,7 +17,7 @@ pub struct TemperatureStats {
 }
 
 /// Individual thermal zone
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct ThermalZone {
     pub index: usize,
     pub name: String,
