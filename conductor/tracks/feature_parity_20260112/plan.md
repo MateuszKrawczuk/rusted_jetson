@@ -143,12 +143,12 @@
   - [x] Add hwmon sysfs parsing
   - [x] Handle missing power sensors gracefully
 
-- [~] Task: Write tests for engine monitoring module
-  - [~] Write tests for APE engine status reading
-  - [~] Write tests for DLA engine status reading
-  - [~] Write tests for NVDEC engine status reading
-  - [~] Write tests for NVENC engine status reading
-  - [~] Write tests for engine clock detection
+- [x] Task: Write tests for engine monitoring module [1e13d8e]
+  - [x] Write tests for APE engine status reading
+  - [x] Write tests for DLA engine status reading
+  - [x] Write tests for NVDEC engine status reading
+  - [x] Write tests for NVENC engine status reading
+  - [x] Write tests for engine clock detection
 
 - [ ] Task: Implement engine monitoring module
   - [ ] Implement APE engine status reading
