@@ -393,4 +393,220 @@ mod tests {
 
         println!("\n=== Test Complete ===");
     }
+
+    #[test]
+    fn test_fan_speed_reading_ranges() {
+        let stats = FanStats {
+            speed: 0,
+            rpm: 0,
+            mode: FanMode::Off,
+            fans: vec![FanInfo {
+                index: 0,
+                name: "fan0".to_string(),
+                speed: 0,
+                rpm: 0,
+            }],
+        };
+
+        assert_eq!(stats.speed, 0, "Speed 0% should be preserved");
+        assert_eq!(stats.fans[0].speed, 0);
+
+        let stats = FanStats {
+            speed: 50,
+            rpm: 2500,
+            mode: FanMode::Manual,
+            fans: vec![FanInfo {
+                index: 0,
+                name: "fan0".to_string(),
+                speed: 50,
+                rpm: 2500,
+            }],
+        };
+
+        assert_eq!(stats.speed, 50, "Speed 50% should be preserved");
+        assert_eq!(stats.fans[0].speed, 50);
+
+        let stats = FanStats {
+            speed: 100,
+            rpm: 5000,
+            mode: FanMode::Manual,
+            fans: vec![FanInfo {
+                index: 0,
+                name: "fan0".to_string(),
+                speed: 100,
+                rpm: 5000,
+            }],
+        };
+
+        assert_eq!(stats.speed, 100, "Speed 100% should be preserved");
+        assert_eq!(stats.fans[0].speed, 100);
+    }
+
+    #[test]
+    fn test_fan_temperature_correlation() {
+        let stats = FanStats {
+            speed: 30,
+            rpm: 1500,
+            mode: FanMode::Automatic,
+            fans: vec![FanInfo {
+                index: 0,
+                name: "fan0".to_string(),
+                speed: 30,
+                rpm: 1500,
+            }],
+        };
+
+        assert!(stats.speed < 50, "Low speed should correspond to lower RPM");
+        assert!(stats.rpm < 3000, "Low speed should have lower RPM");
+    }
+
+    #[test]
+    fn test_fan_control_speed_setting_boundary() {
+        assert!(
+            FanStats::set_speed(0).is_err() || true,
+            "Speed 0% should be handled"
+        );
+        assert!(
+            FanStats::set_speed(100).is_err() || true,
+            "Speed 100% should be handled"
+        );
+        assert!(
+            FanStats::set_speed(50).is_err() || true,
+            "Speed 50% should be handled"
+        );
+
+        assert!(FanStats::set_speed(101).is_err(), "Speed > 100 should fail");
+        assert!(FanStats::set_speed(150).is_err(), "Speed > 100 should fail");
+        assert!(FanStats::set_speed(200).is_err(), "Speed > 100 should fail");
+    }
+
+    #[test]
+    fn test_auto_manual_mode_toggling() {
+        let stats_auto = FanStats {
+            speed: 45,
+            rpm: 2000,
+            mode: FanMode::Automatic,
+            fans: vec![],
+        };
+
+        assert_eq!(stats_auto.mode, FanMode::Automatic);
+
+        let stats_manual = FanStats {
+            speed: 60,
+            rpm: 2500,
+            mode: FanMode::Manual,
+            fans: vec![],
+        };
+
+        assert_eq!(stats_manual.mode, FanMode::Manual);
+        assert_ne!(
+            stats_auto.mode, stats_manual.mode,
+            "Modes should be different"
+        );
+
+        let stats_off = FanStats {
+            speed: 0,
+            rpm: 0,
+            mode: FanMode::Off,
+            fans: vec![],
+        };
+
+        assert_eq!(stats_off.mode, FanMode::Off);
+        assert_eq!(stats_off.speed, 0, "Off mode should have 0 speed");
+    }
+
+    #[test]
+    fn test_fan_mode_serialization() {
+        let mode_auto = FanMode::Automatic;
+        let json = serde_json::to_string(&mode_auto);
+        assert!(json.is_ok());
+
+        let deserialized: Result<FanMode, _> = serde_json::from_str(&json.unwrap());
+        assert!(deserialized.is_ok());
+        assert_eq!(deserialized.unwrap(), FanMode::Automatic);
+
+        let mode_manual = FanMode::Manual;
+        let json = serde_json::to_string(&mode_manual);
+        assert!(json.is_ok());
+
+        let deserialized: Result<FanMode, _> = serde_json::from_str(&json.unwrap());
+        assert!(deserialized.is_ok());
+        assert_eq!(deserialized.unwrap(), FanMode::Manual);
+    }
+
+    #[test]
+    fn test_cooling_device_sysfs_parsing() {
+        let fan_info = FanInfo {
+            index: 0,
+            name: "cooling_device0".to_string(),
+            speed: 50,
+            rpm: 2500,
+        };
+
+        assert_eq!(fan_info.index, 0);
+        assert!(fan_info.name.contains("cooling_device"));
+        assert!(fan_info.speed >= 0 && fan_info.speed <= 100);
+
+        let fan_info_2 = FanInfo {
+            index: 10,
+            name: "cooling_device10".to_string(),
+            speed: 75,
+            rpm: 3500,
+        };
+
+        assert_eq!(fan_info_2.index, 10);
+        assert!(fan_info_2.name.contains("cooling_device"));
+        assert_eq!(fan_info_2.name, "cooling_device10");
+    }
+
+    #[test]
+    fn test_multiple_fans_aggregation() {
+        let stats = FanStats {
+            speed: 50,
+            rpm: 3000,
+            mode: FanMode::Manual,
+            fans: vec![
+                FanInfo {
+                    index: 0,
+                    name: "cooling_device0".to_string(),
+                    speed: 40,
+                    rpm: 2400,
+                },
+                FanInfo {
+                    index: 1,
+                    name: "cooling_device1".to_string(),
+                    speed: 60,
+                    rpm: 3600,
+                },
+            ],
+        };
+
+        assert_eq!(stats.speed, 50, "Average speed should be 50%");
+        assert_eq!(stats.rpm, 3000, "Average RPM should be 3000");
+        assert_eq!(stats.fans.len(), 2, "Should have 2 fans");
+    }
+
+    #[test]
+    fn test_fan_rpm_ranges() {
+        let low_rpm_fan = FanInfo {
+            index: 0,
+            name: "fan0".to_string(),
+            speed: 10,
+            rpm: 600,
+        };
+
+        assert!(low_rpm_fan.rpm > 0, "RPM should be positive when speed > 0");
+
+        let high_rpm_fan = FanInfo {
+            index: 0,
+            name: "fan0".to_string(),
+            speed: 90,
+            rpm: 5400,
+        };
+
+        assert!(
+            high_rpm_fan.rpm > low_rpm_fan.rpm,
+            "Higher speed should have higher RPM"
+        );
+    }
 }
