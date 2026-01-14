@@ -108,7 +108,7 @@
   - [x] Add /proc/meminfo parsing logic [87a2142]
   - [x] Ensure memory usage calculations are accurate [87a2142]
 
-- [x] Task: Write tests for fan monitoring module [<hash>]
+- [x] Task: Write tests for fan monitoring module [1192736]
   - [x] Write tests for fan speed reading
   - [x] Write tests for fan temperature correlation
   - [x] Write tests for fan control (speed setting)
