@@ -128,12 +128,12 @@
   - [x] Add thermal zone sysfs parsing
   - [x] Handle unavailable thermal zones gracefully
 
-- [ ] Task: Write tests for power monitoring module
-  - [ ] Write tests for INA3221 power sensor detection
-  - [ ] Write tests for power rail voltage reading
-  - [ ] Write tests for power rail current reading
-  - [ ] Write tests for power calculation (voltage * current)
-  - [ ] Write tests for hwmon sysfs parsing
+- [~] Task: Write tests for power monitoring module
+  - [~] Write tests for INA3221 power sensor detection
+  - [~] Write tests for power rail voltage reading
+  - [~] Write tests for power rail current reading
+  - [~] Write tests for power calculation (voltage * current)
+  - [~] Write tests for hwmon sysfs parsing
 
 - [ ] Task: Implement power monitoring module
   - [ ] Implement INA3221 power sensor detection from /sys/bus/i2c
@@ -172,6 +172,14 @@
   - [ ] Handle process monitoring errors gracefully
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Core Monitoring Modules' (Protocol in workflow.md)
+
+**Testing Notes:**
+- Successfully tested fan and temperature modules on Nvidia Thor (L4T R38) and AGX Xavier (L4T R35)
+- Used SSH connections with credentials from .env file (as per workflow.md section 8.3)
+- Applied fix for case-insensitive thermal zone detection (commit 7080a87)
+- All 69 tests passed on both platforms
+- Thor: 14 cooling devices, 5 thermal zones detected
+- Xavier: 9 cooling devices, 8 thermal zones detected
 
 ## Phase 3: Control Functionality
 
