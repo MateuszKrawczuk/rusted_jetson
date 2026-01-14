@@ -38,15 +38,20 @@ impl TemperatureStats {
         let mut stats = TemperatureStats::default();
         stats.thermal_zones = read_thermal_zones(path);
 
-        // Extract common temperatures
+        // Extract common temperatures (case-insensitive)
         for zone in &stats.thermal_zones {
-            if zone.name.contains("CPU") || zone.name == "CPU-therm" {
+            let name_lower = zone.name.to_lowercase();
+            if name_lower.contains("cpu") || zone.name == "CPU-therm" || zone.name == "cpu-thermal"
+            {
                 stats.cpu = zone.current_temp;
-            } else if zone.name.contains("GPU") || zone.name == "GPU-therm" {
+            } else if name_lower.contains("gpu")
+                || zone.name == "GPU-therm"
+                || zone.name == "gpu-thermal"
+            {
                 stats.gpu = zone.current_temp;
-            } else if zone.name.contains("PMIC") {
+            } else if name_lower.contains("pmic") {
                 stats.pmic = zone.current_temp;
-            } else if zone.name.contains("Board") || zone.name.contains("Tboard") {
+            } else if name_lower.contains("board") || zone.name.contains("Tboard") {
                 stats.board = zone.current_temp;
             }
         }
