@@ -135,7 +135,7 @@
   - [x] Write tests for power calculation (voltage * current)
   - [x] Write tests for hwmon sysfs parsing
 
-- [x] Task: Implement power monitoring module [<hash>]
+- [x] Task: Implement power monitoring module [e4d52e9]
   - [x] Implement INA3221 power sensor detection from /sys/bus/i2c
   - [x] Implement power rail voltage reading
   - [x] Implement power rail current reading
