@@ -65,13 +65,23 @@
   - [x] Add error handling for missing sysfs paths
   - [x] Ensure async I/O with tokio
 
-- [~] Task: Write tests for GPU monitoring module [8f27610]
+- [x] Task: Write tests for GPU monitoring module [8f27610]
   - [x] Write tests for GPU usage reading from nvidia-smi [538424f]
   - [x] Write tests for GPU frequency detection
   - [x] Write tests for GPU frequency limits reading
   - [x] Write tests for GPU process tracking [538424f]
   - [x] Write tests for nvidia-smi parsing [538424f]
   - [x] Write tests for NVIDIA Thor GPU (tegra264) support
+
+- [~] Task: Implement GPU monitoring module [cdfab36]
+  - [x] Implement GPU usage reading via nvidia-smi command [538424f]
+  - [x] Implement GPU frequency detection from sysfs
+  - [x] Implement GPU frequency limits reading
+  - [x] Implement GPU process tracking via nvidia-smi pmon [538424f]
+  - [x] Add nvidia-smi output parsing [538424f]
+  - [x] Add support for NVIDIA Thor GPU (tegra264) with CUDA 13.0+
+  - [x] Add NVML support for JetPack 7.0+ (Thor)
+  - [x] Handle nvidia-smi unavailability gracefully
 
 - [x] Task: Implement GPU monitoring module [cdfab36]
   - [ ] Implement GPU usage reading via nvidia-smi command
