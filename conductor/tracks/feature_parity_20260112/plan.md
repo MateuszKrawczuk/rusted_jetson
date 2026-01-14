@@ -128,12 +128,12 @@
   - [x] Add thermal zone sysfs parsing
   - [x] Handle unavailable thermal zones gracefully
 
-- [~] Task: Write tests for power monitoring module
-  - [~] Write tests for INA3221 power sensor detection
-  - [~] Write tests for power rail voltage reading
-  - [~] Write tests for power rail current reading
-  - [~] Write tests for power calculation (voltage * current)
-  - [~] Write tests for hwmon sysfs parsing
+- [x] Task: Write tests for power monitoring module [4cb0c8d]
+  - [x] Write tests for INA3221 power sensor detection
+  - [x] Write tests for power rail voltage reading
+  - [x] Write tests for power rail current reading
+  - [x] Write tests for power calculation (voltage * current)
+  - [x] Write tests for hwmon sysfs parsing
 
 - [ ] Task: Implement power monitoring module
   - [ ] Implement INA3221 power sensor detection from /sys/bus/i2c
