@@ -4,13 +4,12 @@
 pub mod cpu;
 pub mod gpu;
 pub mod hardware;
+pub mod memory;
 
-// Temporarily commented out to focus on hardware, CPU, and GPU module tests only
-// These modules have compilation errors unrelated to hardware testing
+// Temporarily commented out - need to fix compilation errors
 // pub mod engine;
 // pub mod fan;
 // pub mod jetson_clocks;
-// pub mod memory;
 // pub mod nvpmodel;
 // pub mod power;
 // pub mod processes;
