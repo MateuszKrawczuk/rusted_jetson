@@ -120,13 +120,13 @@
   - [x] Write tests for trip point reading
   - [x] Write tests for thermal zone sysfs parsing
 
-- [ ] Task: Implement temperature monitoring module
-  - [ ] Implement thermal zone detection from /sys/class/thermal
-  - [ ] Implement thermal zone type reading
-  - [ ] Implement temperature value reading
-  - [ ] Implement trip point reading
-  - [ ] Add thermal zone sysfs parsing
-  - [ ] Handle unavailable thermal zones gracefully
+- [x] Task: Implement temperature monitoring module [<hash>]
+  - [x] Implement thermal zone detection from /sys/class/thermal
+  - [x] Implement thermal zone type reading
+  - [x] Implement temperature value reading
+  - [x] Implement trip point reading
+  - [x] Add thermal zone sysfs parsing
+  - [x] Handle unavailable thermal zones gracefully
 
 - [ ] Task: Write tests for power monitoring module
   - [ ] Write tests for INA3221 power sensor detection
