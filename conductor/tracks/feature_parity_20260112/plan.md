@@ -354,11 +354,11 @@ for zone in sorted(thermal_zones):
   - [x] Write tests for jetson_clocks toggling
   - [x] Write tests for jetson_clocks command execution
 
-- [ ] Task: Implement jetson_clocks control
-  - [ ] Implement current jetson_clocks state reading
-  - [ ] Implement jetson_clocks toggling via command
-  - [ ] Add error handling for jetson_clocks command failures
-  - [ ] Ensure jetson_clocks works on supported platforms
+- [x] Task: Implement jetson_clocks control [9842617]
+  - [x] Implement current jetson_clocks state reading
+  - [x] Implement jetson_clocks toggling via command
+  - [x] Add error handling for jetson_clocks command failures
+  - [x] Ensure jetson_clocks works on supported platforms
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Control Functionality' (Protocol in workflow.md)
 
