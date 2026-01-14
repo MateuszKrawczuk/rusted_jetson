@@ -113,7 +113,7 @@
   - [x] Add error handling for fan control permissions
   - [x] Ensure fan control works on all supported platforms
 
-- [x] Task: Write tests for temperature monitoring module [<hash>]
+- [x] Task: Write tests for temperature monitoring module [8a5786c]
   - [x] Write tests for thermal zone detection
   - [x] Write tests for thermal zone type reading
   - [x] Write tests for temperature value reading
