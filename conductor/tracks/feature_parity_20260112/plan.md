@@ -158,11 +158,11 @@
   - [x] Implement engine clock detection
   - [x] Handle unavailable engines gracefully
 
-- [~] Task: Write tests for process monitoring module
-  - [~] Write tests for GPU process detection
-  - [~] Write tests for process memory usage tracking
-  - [~] Write tests for nvidia-smi pmon parsing
-  - [~] Write tests for /proc/*/fd/ GPU device file checking
+- [x] Task: Write tests for process monitoring module [fbb6972]
+  - [x] Write tests for GPU process detection
+  - [x] Write tests for process memory usage tracking
+  - [x] Write tests for nvidia-smi pmon parsing
+  - [x] Write tests for /proc/*/fd/ GPU device file checking
 
 - [ ] Task: Implement process monitoring module
   - [ ] Implement GPU process detection via nvidia-smi pmon
