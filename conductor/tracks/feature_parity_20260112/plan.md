@@ -120,7 +120,7 @@
   - [x] Write tests for trip point reading
   - [x] Write tests for thermal zone sysfs parsing
 
-- [x] Task: Implement temperature monitoring module [<hash>]
+- [x] Task: Implement temperature monitoring module [1bc14ba]
   - [x] Implement thermal zone detection from /sys/class/thermal
   - [x] Implement thermal zone type reading
   - [x] Implement temperature value reading
