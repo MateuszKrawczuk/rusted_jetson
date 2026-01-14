@@ -341,13 +341,13 @@ for zone in sorted(thermal_zones):
   - [x] Write tests for /etc/nvpmodel.conf parsing
   - [x] Write tests for nvpmodel command execution
 
-- [ ] Task: Implement NVP model control
-  - [ ] Implement current NVP model ID reading
-  - [ ] Implement available NVP model list retrieval
-  - [ ] Implement NVP model setting via nvpmodel command
-  - [ ] Add /etc/nvpmodel.conf parsing
-  - [ ] Add error handling for nvpmodel command failures
-  - [ ] Ensure NVP model control works on all platforms
+- [x] Task: Implement NVP model control [c4839d2]
+  - [x] Implement current NVP model ID reading
+  - [x] Implement available NVP model list retrieval
+  - [x] Implement NVP model setting via nvpmodel command
+  - [x] Add /etc/nvpmodel.conf parsing
+  - [x] Add error handling for nvpmodel command failures
+  - [x] Ensure NVP model control works on all platforms
 
 - [ ] Task: Write tests for jetson_clocks control
   - [ ] Write tests for jetson_clocks state reading
