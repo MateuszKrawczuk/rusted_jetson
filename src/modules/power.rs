@@ -95,9 +95,9 @@ fn read_ina3221_rail(iio_path: &Path) -> Option<PowerRail> {
 
     Some(PowerRail {
         name,
-        current: current_mA,
-        voltage: voltage_mV,
-        power: power_mW,
+        current: current_m_a,
+        voltage: voltage_m_v,
+        power: power_m_w,
     })
 }
 
@@ -222,9 +222,9 @@ mod tests {
 
         let rail = PowerRail {
             name: "VDD_CPU".to_string(),
-            current: current_mA,
-            voltage: voltage_mV,
-            power: expected_power_mW,
+            current: current_m_a,
+            voltage: voltage_m_v,
+            power: expected_power_m_w,
         };
 
         assert_eq!(rail.power, 7500.0);
