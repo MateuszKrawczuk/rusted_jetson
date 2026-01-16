@@ -152,7 +152,7 @@ impl TuiApp {
     }
 
     fn tick(&mut self) {
-        // Collect real stats from modules
+        // Collect real stats from modules (with error handling)
         let stats = self.collect_stats();
         self.stats = Some(stats.clone());
 
@@ -290,56 +290,83 @@ impl TuiApp {
     }
 
     fn collect_stats(&self) -> JetsonStats {
-        // Collect stats from hardware modules
-        use crate::modules::{cpu, fan, gpu, hardware, memory, power, temperature};
+        use std::panic;
 
-        JetsonStats {
-            cpu: SimpleCpuStats {
-                usage: cpu::CpuStats::get().usage,
-                frequency: cpu::CpuStats::get()
-                    .cores
-                    .first()
-                    .map(|c| c.frequency)
-                    .unwrap_or(0),
-            },
-            gpu: SimpleGpuStats {
-                usage: gpu::GpuStats::get().usage,
-                frequency: gpu::GpuStats::get().frequency,
-            },
-            memory: {
-                let mem = memory::MemoryStats::get();
-                SimpleMemoryStats {
-                    ram_used: mem.ram_used,
-                    ram_total: mem.ram_total,
-                    swap_used: mem.swap_used,
-                    swap_total: mem.swap_total,
-                }
-            },
-            fan: SimpleFanStats {
-                speed: fan::FanStats::get().speed,
-            },
-            temperature: {
-                let temp = temperature::TemperatureStats::get();
-                SimpleTemperatureStats {
-                    cpu: temp.cpu,
-                    gpu: temp.gpu,
-                }
-            },
-            power: SimplePowerStats {
-                total: power::PowerStats::get().total,
-            },
-            board: {
-                let hw = hardware::detect_board();
-                SimpleBoardInfo {
-                    model: hw.model,
-                    jetpack: hw.jetpack,
-                    l4t: hw.l4t,
-                }
+        // Collect stats from hardware modules with panic recovery
+        let stats = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+            use crate::modules::{cpu, fan, gpu, hardware, memory, power, temperature};
+
+            JetsonStats {
+                cpu: SimpleCpuStats {
+                    usage: cpu::CpuStats::get().usage,
+                    frequency: cpu::CpuStats::get()
+                        .cores
+                        .first()
+                        .map(|c| c.frequency)
+                        .unwrap_or(0),
+                },
+                gpu: SimpleGpuStats {
+                    usage: gpu::GpuStats::get().usage,
+                    frequency: gpu::GpuStats::get().frequency,
+                },
+                memory: {
+                    let mem = memory::MemoryStats::get();
+                    SimpleMemoryStats {
+                        ram_used: mem.ram_used,
+                        ram_total: mem.ram_total,
+                        swap_used: mem.swap_used,
+                        swap_total: mem.swap_total,
+                    }
+                },
+                fan: SimpleFanStats {
+                    speed: fan::FanStats::get().speed,
+                },
+                temperature: {
+                    let temp = temperature::TemperatureStats::get();
+                    SimpleTemperatureStats {
+                        cpu: temp.cpu,
+                        gpu: temp.gpu,
+                    }
+                },
+                power: SimplePowerStats {
+                    total: power::PowerStats::get().total,
+                },
+                board: {
+                    let hw = hardware::detect_board();
+                    SimpleBoardInfo {
+                        model: hw.model,
+                        jetpack: hw.jetpack,
+                        l4t: hw.l4t,
+                    }
+                },
+            }
+        }));
+
+        match stats {
+            Ok(s) => s,
+            Err(_) => JetsonStats {
+                cpu: SimpleCpuStats { usage: 0.0, frequency: 0 },
+                gpu: SimpleGpuStats { usage: 0.0, frequency: 0 },
+                memory: SimpleMemoryStats {
+                    ram_used: 0,
+                    ram_total: 0,
+                    swap_used: 0,
+                    swap_total: 0,
+                },
+                fan: SimpleFanStats { speed: 0 },
+                temperature: SimpleTemperatureStats { cpu: 0.0, gpu: 0.0 },
+                power: SimplePowerStats { total: 0.0 },
+                board: SimpleBoardInfo {
+                    model: "Unknown".to_string(),
+                    jetpack: "N/A".to_string(),
+                    l4t: "N/A".to_string(),
+                },
             },
         }
     }
 
     fn handle_key(&mut self, key: event::KeyEvent) -> anyhow::Result<()> {
+
         if key.kind != KeyEventKind::Press {
             return Ok(());
         }
@@ -382,14 +409,6 @@ impl TuiApp {
             }
             _ => {}
         }
-
-        Ok(())
-    }
-
-    fn draw(&mut self) -> anyhow::Result<()> {
-        self.terminal.draw(|f| match self.current_screen {
-            ScreenState::All => {
-                self.all_screen.draw(f);
             }
             ScreenState::Cpu => {
                 self.cpu_screen.draw(f);
@@ -409,6 +428,21 @@ impl TuiApp {
             ScreenState::Control => {
                 self.control_screen.draw(f);
             }
+
+    fn draw(&mut self) -> anyhow::Result<()> {
+        self.terminal.draw(|f| match self.current_screen {
+            ScreenState::All => self.all_screen.draw(f),
+            ScreenState::Cpu => self.cpu_screen.draw(f),
+            ScreenState::Gpu => self.gpu_screen.draw(f),
+            ScreenState::Memory => self.memory_screen.draw(f),
+            ScreenState::Power => self.power_screen.draw(f),
+            ScreenState::Temperature => self.temperature_screen.draw(f),
+            ScreenState::Control => self.control_screen.draw(f),
+            ScreenState::Info => self.info_screen.draw(f),
+        })?;
+        self.terminal.flush()?;
+        Ok(())
+    }
             ScreenState::Info => {
                 self.info_screen.draw(f);
             }
