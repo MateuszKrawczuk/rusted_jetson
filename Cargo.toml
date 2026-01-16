@@ -63,8 +63,3 @@ required-features = []
 name = "rjtop"
 path = "src/main.rs"
 required-features = ["tui"]
-
-[[bin]]
-name = "rjtop-cli"
-path = "src/main_cli.rs"
-required-features = []
