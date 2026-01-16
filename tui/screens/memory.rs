@@ -105,10 +105,10 @@ impl MemoryScreen {
         let mem_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(7), // RAM
-                Constraint::Length(7), // SWAP
-                Constraint::Length(5), // IRAM
-                Constraint::Min(0),    // Spacer
+                Constraint::Percentage(35), // RAM
+                Constraint::Percentage(35), // SWAP
+                Constraint::Percentage(25), // IRAM
+                Constraint::Min(0),         // Spacer
             ])
             .split(area);
 

@@ -96,10 +96,10 @@ impl InfoScreen {
         let body_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(15), // Board info
-                Constraint::Length(10), // CPU info
-                Constraint::Length(10), // GPU info
-                Constraint::Min(0),     // Spacer
+                Constraint::Percentage(30), // Board info
+                Constraint::Percentage(30), // CPU info
+                Constraint::Percentage(30), // GPU info
+                Constraint::Min(0),         // Spacer
             ])
             .split(area);
 

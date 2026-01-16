@@ -131,11 +131,11 @@ impl AllScreen {
         let body_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(10), // CPU
-                Constraint::Length(10), // GPU
-                Constraint::Length(10), // Memory
-                Constraint::Length(10), // Temperature
-                Constraint::Length(10), // Power
+                Constraint::Percentage(20), // CPU
+                Constraint::Percentage(20), // GPU
+                Constraint::Percentage(20), // Memory
+                Constraint::Percentage(20), // Temperature
+                Constraint::Percentage(20), // Power
             ])
             .split(area);
 

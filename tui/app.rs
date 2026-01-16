@@ -60,8 +60,7 @@ impl TuiApp {
         // Initialize terminal
         let stdout = io::stdout();
         let backend = CrosstermBackend::new(stdout);
-        let mut terminal = Terminal::new(backend)?;
-        terminal.clear()?;
+        let terminal = Terminal::new(backend)?;
 
         Ok(Self {
             terminal,
@@ -285,8 +284,6 @@ impl TuiApp {
                 .collect(),
         };
         self.temperature_screen.update(temp_screen_stats);
-
-        let _ = self.draw();
     }
 
     fn collect_stats(&self) -> JetsonStats {
@@ -414,7 +411,6 @@ impl TuiApp {
             }
         })?;
 
-        self.terminal.flush()?;
         Ok(())
     }
 }
