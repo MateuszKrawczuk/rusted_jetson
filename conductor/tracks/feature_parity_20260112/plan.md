@@ -458,7 +458,13 @@ for zone in sorted(thermal_zones):
    - [x] Write tests for --jetson-clocks flag parsing
    - [x] Write tests for --endpoint parameter parsing
 
-- [~] Task: Implement CLI argument parsing (Protocol in workflow.md)
+- [x] Task: Implement CLI argument parsing [124031c] (Protocol in workflow.md)
+   - [x] Implement --stats flag for JSON output [124031c]
+   - [x] Implement --export otlp flag with endpoint parameter [124031c]
+   - [x] Implement --fan speed command [124031c]
+   - [x] Implement --nvpmodel command with ID parameter [124031c]
+   - [x] Implement --jetson-clocks flag [124031c]
+   - [x] Add help text and usage examples [124031c]
   - [ ] Implement --stats flag for JSON output
   - [ ] Implement --export otlp flag with endpoint parameter
   - [ ] Implement --fan speed command
@@ -481,7 +487,7 @@ for zone in sorted(thermal_zones):
   - [ ] Implement jetson_clocks toggling command
   - [ ] Add error handling and user-friendly messages
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 5: CLI Implementation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 5: CLI Implementation' (Protocol in workflow.md)
 
 ## Phase 6: Testing & Validation
 
