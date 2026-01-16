@@ -171,7 +171,7 @@
   - [x] Add /proc/*/fd/ GPU device file checking
   - [x] Handle process monitoring errors gracefully
 
-- [x] Task: Conductor - User Manual Verification 'Phase 2: Core Monitoring Modules' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Core Monitoring Modules' [9723fc1] (Protocol in workflow.md)
 
 **Testing Notes:**
 - Successfully tested fan and temperature modules on Nvidia Thor (L4T R38) and AGX Xavier (L4T R35)
