@@ -171,7 +171,7 @@
   - [x] Add /proc/*/fd/ GPU device file checking
   - [x] Handle process monitoring errors gracefully
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Core Monitoring Modules' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Core Monitoring Modules' (Protocol in workflow.md)
 
 **Testing Notes:**
 - Successfully tested fan and temperature modules on Nvidia Thor (L4T R38) and AGX Xavier (L4T R35)
@@ -180,6 +180,9 @@
 - All 69 tests passed on both platforms
 - Thor: 14 cooling devices, 5 thermal zones detected
 - Xavier: 9 cooling devices, 8 thermal zones detected
+- Fixed CPU core detection to handle missing "cpu MHz" lines in /proc/cpuinfo
+- Fixed GPU devfreq detection to support Xavier's 17000000.gv11b path
+- All 15 ignored tests now pass on Xavier (including power, engine, and processes)
 
 **Manual Verification Plan for Phase 2: Core Monitoring Modules**
 
@@ -325,6 +328,26 @@ for zone in sorted(thermal_zones):
 ```
 
 **Expected:** Same thermal zones and cooling devices detected as rusted-jetsons (both read from same sysfs source)
+
+---
+
+**Verification Results (Xavier only):**
+- All 126 tests passed (15 ignored tests pass on Xavier)
+- CPU: 8 cores detected, per-core usage: 0.09-0.13%, governor: schedutil
+- GPU: 114 MHz detected @ 1377 MHz max, temp: 35.5°C, governor: nvhost_podgov
+- Memory: 728/14886 MB RAM, 0/7443 MB swap
+- Fan: 9 cooling devices detected
+- Temperature: 8 thermal zones (CPU: 35.5°C, GPU: 35.5°C, PMIC: 50.0°C)
+- Power: No INA3221 sensors detected on Xavier
+- Engine: APE, DLA, NVDEC, NVENC, NVJPG detected
+- Processes: nvidia-smi not available (Xavier doesn't have nvidia-smi)
+- Sysfs validation: All thermal zones and cooling devices match sysfs data
+
+**Issues Fixed:**
+1. CPU core detection now handles missing "cpu MHz" lines in /proc/cpuinfo (Xavier)
+2. GPU devfreq detection now supports Xavier's 17000000.gv11b path
+3. Added print_info tests for power, engine, and processes modules
+4. All hardware-specific tests now pass on Xavier
 
 ---
 

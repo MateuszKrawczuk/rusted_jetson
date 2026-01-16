@@ -158,6 +158,16 @@ fn find_gpu_devfreq() -> Option<String> {
         }
     }
 
+    // Fallback: search for any devfreq entry containing 'gpu' or 'gv11b'
+    if let Ok(entries) = fs::read_dir(base_path) {
+        for entry in entries.flatten() {
+            let entry_name = entry.file_name().to_string_lossy().to_lowercase();
+            if entry_name.contains("gpu") || entry_name.contains("gv11b") {
+                return Some(entry.path().to_string_lossy().to_string());
+            }
+        }
+    }
+
     None
 }
 

@@ -123,7 +123,7 @@ fn read_cpu_cores() -> anyhow::Result<Vec<CpuCore>> {
     let path = Path::new("/proc/cpuinfo");
     let file = BufReader::new(fs::File::open(path)?);
 
-    let mut cores = Vec::new();
+    let mut cores: Vec<CpuCore> = Vec::new();
     let mut current_core: Option<usize> = None;
 
     for line in file.lines() {
@@ -132,16 +132,20 @@ fn read_cpu_cores() -> anyhow::Result<Vec<CpuCore>> {
             match key.trim() {
                 "processor" => {
                     current_core = Some(value.trim().parse().unwrap_or(0));
+                    let idx = current_core.unwrap();
+                    cores.push(CpuCore {
+                        index: idx,
+                        frequency: 0,
+                        usage: 0.0,
+                        governor: get_governor(idx),
+                    });
                 }
                 "cpu MHz" => {
                     if let Some(idx) = current_core {
-                        let freq = value.trim().parse().unwrap_or(0);
-                        cores.push(CpuCore {
-                            index: idx,
-                            frequency: (freq as u32) * 1_000_000,
-                            usage: 0.0,
-                            governor: get_governor(idx),
-                        });
+                        if let Some(core) = cores.iter_mut().find(|c| c.index == idx) {
+                            let freq = value.trim().parse().unwrap_or(0);
+                            core.frequency = (freq as u32) * 1_000_000;
+                        }
                     }
                 }
                 _ => {}
@@ -164,7 +168,7 @@ async fn read_cpu_cores_async() -> anyhow::Result<Vec<CpuCore>> {
     let path = Path::new("/proc/cpuinfo");
     let content = tokio_fs::read_to_string(path).await?;
 
-    let mut cores = Vec::new();
+    let mut cores: Vec<CpuCore> = Vec::new();
     let mut current_core: Option<usize> = None;
 
     for line in content.lines() {
@@ -172,16 +176,20 @@ async fn read_cpu_cores_async() -> anyhow::Result<Vec<CpuCore>> {
             match key.trim() {
                 "processor" => {
                     current_core = Some(value.trim().parse().unwrap_or(0));
+                    let idx = current_core.unwrap();
+                    cores.push(CpuCore {
+                        index: idx,
+                        frequency: 0,
+                        usage: 0.0,
+                        governor: get_governor_async(idx).await,
+                    });
                 }
                 "cpu MHz" => {
                     if let Some(idx) = current_core {
-                        let freq = value.trim().parse().unwrap_or(0);
-                        cores.push(CpuCore {
-                            index: idx,
-                            frequency: (freq as u32) * 1_000_000,
-                            usage: 0.0,
-                            governor: get_governor_async(idx).await,
-                        });
+                        if let Some(core) = cores.iter_mut().find(|c| c.index == idx) {
+                            let freq = value.trim().parse().unwrap_or(0);
+                            core.frequency = (freq as u32) * 1_000_000;
+                        }
                     }
                 }
                 _ => {}
