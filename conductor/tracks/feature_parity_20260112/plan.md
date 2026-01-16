@@ -366,14 +366,14 @@ for zone in sorted(thermal_zones):
 
 ### Tasks
 
- - [x] Task: Write tests for TUI app structure [fixed compilation errors, tests pass]
-   - [x] Write tests for TUI app initialization
-   - [x] Write tests for screen state management [state.rs tests complete]
-   - [x] Write tests for keyboard event handling [app.rs tests complete]
-   - [x] Write tests for screen transitions [app.rs tests complete]
-   - [x] Write tests for terminal cleanup on exit [app.rs tests complete]
+  - [x] Task: Write tests for TUI app structure [73069ad]
+    - [x] Write tests for TUI app initialization
+    - [x] Write tests for screen state management [state.rs tests complete]
+    - [x] Write tests for keyboard event handling [app.rs tests complete]
+    - [x] Write tests for screen transitions [app.rs tests complete]
+    - [x] Write tests for terminal cleanup on exit [app.rs tests complete]
 
- - [x] Task: Implement TUI app structure [implementation exists in tui/ directory]
+  - [x] Task: Implement TUI app structure [73069ad]
    - [x] Implement TUI app initialization with ratatui
    - [x] Implement screen state management
    - [x] Implement keyboard event handling with crossterm
