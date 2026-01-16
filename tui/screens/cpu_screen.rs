@@ -12,34 +12,23 @@ use ratatui::{
     Frame,
 };
 
-use crate::{
-    modules::{CpuStats, FanStats, TemperatureStats},
-    SimpleCpuStats, SimpleFanStats, SimpleTemperatureStats,
-};
+use crate::modules::{CpuStats, FanStats, TemperatureStats};
 
-use crate::{cpu::CpuStats, fan::FanStats, temperature::TemperatureStats};
+use super::SimpleTemperatureStats;
 
-/// CPU screen - detailed CPU monitoring
-pub struct CpuScreen {
-    stats: Option<CpuStats>,
-    selected_core: usize,
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleCpuStats {
+    pub usage: f32,
+    pub frequency: u32,
 }
 
-impl CpuScreen {
-    pub fn new() -> Self {
-        Self {
-            stats: None,
-            selected_core: 0,
-        }
-    }
-
-    pub fn update(&mut self, stats: CpuStats) {
-        self.stats = Some(stats);
-    }
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleFanStats {
+    pub speed: u8,
 }
 
 #[derive(Debug, Clone)]
-struct CpuScreenStats {
+pub struct CpuScreenStats {
     pub overall: SimpleCpuStats,
     pub cores: Vec<CoreStats>,
     pub fan: SimpleFanStats,
@@ -47,11 +36,17 @@ struct CpuScreenStats {
 }
 
 #[derive(Debug, Clone)]
-struct CoreStats {
+pub struct CoreStats {
     pub index: usize,
     pub usage: f32,
     pub frequency: u32,
     pub governor: String,
+}
+
+/// CPU screen - detailed CPU monitoring
+pub struct CpuScreen {
+    stats: Option<CpuScreenStats>,
+    selected_core: usize,
 }
 
 impl CpuScreen {
@@ -66,7 +61,7 @@ impl CpuScreen {
         self.stats = Some(stats);
     }
 
-    pub fn draw<B: Backend>(&mut self, f: &mut Frame<B>) {
+    pub fn draw(&mut self, f: &mut Frame) {
         if let Some(stats) = &self.stats {
             self.draw_content(f, stats);
         } else {
@@ -74,7 +69,7 @@ impl CpuScreen {
         }
     }
 
-    fn draw_loading<B: Backend>(&self, f: &mut Frame<B>) {
+    fn draw_loading(&self, f: &mut Frame) {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
@@ -82,7 +77,7 @@ impl CpuScreen {
         f.render_widget(paragraph, size);
     }
 
-    fn draw_content<B: Backend>(&self, f: &mut Frame<B>, stats: &CpuScreenStats) {
+    fn draw_content(&self, f: &mut Frame, stats: &CpuScreenStats) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -97,7 +92,7 @@ impl CpuScreen {
         self.draw_footer(f, chunks[2]);
     }
 
-    fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_header(&self, f: &mut Frame, area: Rect) {
         let header = Paragraph::new(vec![Line::from(vec![
             Span::styled(
                 "rusted-jetsons",
@@ -112,7 +107,7 @@ impl CpuScreen {
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &CpuScreenStats, area: Rect) {
+    fn draw_body(&self, f: &mut Frame, stats: &CpuScreenStats, area: Rect) {
         let body_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
@@ -125,7 +120,7 @@ impl CpuScreen {
         self.draw_core_details(f, stats, body_chunks[1]);
     }
 
-    fn draw_core_list<B: Backend>(&self, f: &mut Frame<B>, stats: &CpuScreenStats, area: Rect) {
+    fn draw_core_list(&self, f: &mut Frame, stats: &CpuScreenStats, area: Rect) {
         let overall_gauge = Gauge::default()
             .block(Block::default().borders(Borders::ALL).title("Overall CPU"))
             .gauge_style(Style::default().fg(Color::Green))
@@ -134,8 +129,8 @@ impl CpuScreen {
         f.render_widget(overall_gauge, area);
     }
 
-    fn draw_core_details<B: Backend>(&self, f: &mut Frame<B>, stats: &CpuScreenStats, area: Rect) {
-        let items = stats
+    fn draw_core_details(&self, f: &mut Frame, stats: &CpuScreenStats, area: Rect) {
+        let items: Vec<ListItem> = stats
             .cores
             .iter()
             .map(|core| {
@@ -157,7 +152,7 @@ impl CpuScreen {
         f.render_widget(list, area);
     }
 
-    fn draw_footer<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_footer(&self, f: &mut Frame, area: Rect) {
         let fan_temp = if let Some(stats) = &self.stats {
             format!(
                 "Fan: {}% | CPU: {:.1}°C",

@@ -12,9 +12,16 @@ use ratatui::{
     Frame,
 };
 
-use crate::{
-    SimpleBoardInfo, SimpleCpuStats, SimpleFanStats, SimpleGpuStats, SimpleMemoryStats,
-    SimplePowerStats, SimpleTemperatureStats,
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleBoardInfo {
+    pub model: String,
+    pub jetpack: String,
+    pub l4t: String,
+}
+
+use super::{
+    SimpleCpuStats, SimpleFanStats, SimpleGpuStats, SimpleMemoryStats, SimplePowerStats,
+    SimpleTemperatureStats,
 };
 
 /// Info screen - hardware information
@@ -23,7 +30,7 @@ pub struct InfoScreen {
 }
 
 #[derive(Debug, Clone)]
-struct InfoStats {
+pub struct InfoStats {
     pub board: SimpleBoardInfo,
     pub cpu_cores: usize,
     pub cpu_governor: String,
@@ -39,7 +46,7 @@ impl InfoScreen {
         self.stats = Some(stats);
     }
 
-    pub fn draw<B: Backend>(&mut self, f: &mut Frame<B>) {
+    pub fn draw(&mut self, f: &mut Frame) {
         if let Some(stats) = &self.stats {
             self.draw_content(f, stats);
         } else {
@@ -47,7 +54,7 @@ impl InfoScreen {
         }
     }
 
-    fn draw_loading<B: Backend>(&self, f: &mut Frame<B>) {
+    fn draw_loading(&self, f: &mut Frame) {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
@@ -55,7 +62,7 @@ impl InfoScreen {
         f.render_widget(paragraph, size);
     }
 
-    fn draw_content<B: Backend>(&self, f: &mut Frame<B>, stats: &InfoStats) {
+    fn draw_content(&self, f: &mut Frame, stats: &InfoStats) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -70,7 +77,7 @@ impl InfoScreen {
         self.draw_footer(f, chunks[2]);
     }
 
-    fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_header(&self, f: &mut Frame, area: Rect) {
         let header = Paragraph::new(vec![Line::from(vec![
             Span::styled(
                 "rusted-jetsons",
@@ -85,7 +92,7 @@ impl InfoScreen {
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &InfoStats, area: Rect) {
+    fn draw_body(&self, f: &mut Frame, stats: &InfoStats, area: Rect) {
         let body_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -101,7 +108,7 @@ impl InfoScreen {
         self.draw_gpu_info(f, stats, body_chunks[2]);
     }
 
-    fn draw_board_info<B: Backend>(&self, f: &mut Frame<B>, stats: &InfoStats, area: Rect) {
+    fn draw_board_info(&self, f: &mut Frame, stats: &InfoStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "Board Information",
@@ -129,7 +136,7 @@ impl InfoScreen {
         f.render_widget(paragraph, area);
     }
 
-    fn draw_cpu_info<B: Backend>(&self, f: &mut Frame<B>, stats: &InfoStats, area: Rect) {
+    fn draw_cpu_info(&self, f: &mut Frame, stats: &InfoStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "CPU Information",
@@ -153,7 +160,7 @@ impl InfoScreen {
         f.render_widget(paragraph, area);
     }
 
-    fn draw_gpu_info<B: Backend>(&self, f: &mut Frame<B>, stats: &InfoStats, area: Rect) {
+    fn draw_gpu_info(&self, f: &mut Frame, stats: &InfoStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "GPU Information",
@@ -173,7 +180,7 @@ impl InfoScreen {
         f.render_widget(paragraph, area);
     }
 
-    fn draw_footer<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_footer(&self, f: &mut Frame, area: Rect) {
         let footer_text = "q: quit | 1-8: screens | h: help";
         let paragraph = Paragraph::new(footer_text)
             .block(Block::default().borders(Borders::ALL))

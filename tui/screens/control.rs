@@ -5,7 +5,6 @@
 
 use ratatui::{
     backend::Backend,
-    crossterm::event::KeyEvent,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
@@ -13,7 +12,9 @@ use ratatui::{
     Frame,
 };
 
-use crate::{
+use crossterm::event::KeyEvent;
+
+use super::{
     SimpleBoardInfo, SimpleCpuStats, SimpleFanStats, SimpleGpuStats, SimpleMemoryStats,
     SimplePowerStats, SimpleTemperatureStats,
 };
@@ -25,7 +26,7 @@ pub struct ControlScreen {
 }
 
 #[derive(Debug, Clone)]
-struct ControlStats {
+pub struct ControlStats {
     pub fan_speed: u8,
     pub fan_mode: String,
     pub jetson_clocks: bool,
@@ -46,7 +47,7 @@ impl ControlScreen {
         self.stats = Some(stats);
     }
 
-    pub fn draw<B: Backend>(&mut self, f: &mut Frame<B>) {
+    pub fn draw(&mut self, f: &mut Frame) {
         if let Some(stats) = &self.stats {
             self.draw_content(f, stats);
         } else {
@@ -54,7 +55,7 @@ impl ControlScreen {
         }
     }
 
-    fn draw_loading<B: Backend>(&self, f: &mut Frame<B>) {
+    fn draw_loading(&self, f: &mut Frame) {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
@@ -62,7 +63,7 @@ impl ControlScreen {
         f.render_widget(paragraph, size);
     }
 
-    fn draw_content<B: Backend>(&self, f: &mut Frame<B>, stats: &ControlStats) {
+    fn draw_content(&self, f: &mut Frame, stats: &ControlStats) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -77,7 +78,7 @@ impl ControlScreen {
         self.draw_footer(f, chunks[2]);
     }
 
-    fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_header(&self, f: &mut Frame, area: Rect) {
         let header = Paragraph::new(vec![Line::from(vec![
             Span::styled(
                 "rusted-jetsons",
@@ -92,7 +93,7 @@ impl ControlScreen {
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &ControlStats, area: Rect) {
+    fn draw_body(&self, f: &mut Frame, stats: &ControlStats, area: Rect) {
         let items = vec![
             ListItem::new(format!(
                 "Fan Speed: {}% ({})",
@@ -121,7 +122,7 @@ impl ControlScreen {
         f.render_widget(list, area);
     }
 
-    fn draw_footer<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_footer(&self, f: &mut Frame, area: Rect) {
         let footer_text = "q: quit | ↑↓: navigate | Enter: select | 1-8: screens | h: help";
         let paragraph = Paragraph::new(footer_text)
             .block(Block::default().borders(Borders::ALL))
@@ -129,8 +130,8 @@ impl ControlScreen {
         f.render_widget(paragraph, area);
     }
 
-    pub fn handle_key(&mut self, key: event::KeyEvent) -> anyhow::Result<()> {
-        use event::{KeyCode, KeyEventKind};
+    pub fn handle_key(&mut self, key: crossterm::event::KeyEvent) -> anyhow::Result<()> {
+        use crossterm::event::{KeyCode, KeyEventKind};
 
         if key.kind != KeyEventKind::Press {
             return Ok(());

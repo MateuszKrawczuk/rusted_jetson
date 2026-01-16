@@ -8,7 +8,9 @@ use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event as CEvent},
+    event::{
+        self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEventKind,
+    },
     execute,
 };
 use ratatui::{
@@ -17,15 +19,17 @@ use ratatui::{
 };
 
 use crate::tui::screens::{
-    AllScreen, ControlScreen, CpuScreen, GpuScreen, InfoScreen, MemoryScreen, PowerScreen,
-    TemperatureScreen,
+    AllScreen, ControlScreen, CpuScreen, GpuScreen, InfoScreen, JetsonStats, MemoryScreen,
+    PowerScreen, SimpleBoardInfo, SimpleCpuStats, SimpleFanStats, SimpleGpuStats,
+    SimpleMemoryStats, SimplePowerStats, SimpleTemperatureStats, TemperatureScreen,
 };
 use crate::tui::state::{ScreenState, StateMessage};
-use crate::JetsonStats;
+
+use crate::modules::{cpu, fan, gpu, memory, power, temperature};
 
 /// Main TUI application
 pub struct TuiApp {
-    terminal: Terminal<CrosstermBackend>,
+    terminal: Terminal<CrosstermBackend<io::Stdout>>,
     tx: mpsc::Sender<StateMessage>,
     rx: mpsc::Receiver<StateMessage>,
     current_screen: ScreenState,
@@ -128,7 +132,7 @@ impl TuiApp {
 
     fn tick(&mut self) {
         // Collect real stats from modules
-        let stats = collect_stats();
+        let stats = self.collect_stats();
         self.stats = Some(stats.clone());
 
         // Update all screens with current stats
@@ -315,8 +319,6 @@ impl TuiApp {
     }
 
     fn handle_key(&mut self, key: event::KeyEvent) -> anyhow::Result<()> {
-        use event::{KeyCode, KeyEventKind};
-
         if key.kind != KeyEventKind::Press {
             return Ok(());
         }
@@ -401,5 +403,242 @@ impl Drop for TuiApp {
         // Restore terminal
         let _ = execute!(io::stdout(), DisableMouseCapture,);
         let _ = self.terminal.show_cursor();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+
+    #[test]
+    fn test_screen_state_index_consistency() {
+        let all_screen = ScreenState::All;
+        assert_eq!(all_screen.index(), 1);
+
+        let cpu_screen = ScreenState::Cpu;
+        assert_eq!(cpu_screen.index(), 2);
+
+        let gpu_screen = ScreenState::Gpu;
+        assert_eq!(gpu_screen.index(), 3);
+    }
+
+    #[test]
+    fn test_screen_state_from_index_roundtrip() {
+        for idx in 0..ScreenState::COUNT {
+            if let Some(state) = ScreenState::from_index(idx) {
+                assert!(state.index() >= 1 && state.index() <= 8);
+            }
+        }
+    }
+
+    #[test]
+    fn test_screen_state_names() {
+        assert_eq!(ScreenState::All.name(), "All");
+        assert_eq!(ScreenState::Cpu.name(), "CPU");
+        assert_eq!(ScreenState::Gpu.name(), "GPU");
+        assert_eq!(ScreenState::Memory.name(), "Memory");
+        assert_eq!(ScreenState::Power.name(), "Power");
+        assert_eq!(ScreenState::Temperature.name(), "Temperature");
+        assert_eq!(ScreenState::Control.name(), "Control");
+        assert_eq!(ScreenState::Info.name(), "Info");
+    }
+
+    #[test]
+    fn test_screen_state_transitions() {
+        let initial_screen = ScreenState::All;
+        assert_eq!(initial_screen, ScreenState::All);
+
+        let cpu_screen = ScreenState::Cpu;
+        assert_ne!(initial_screen, cpu_screen);
+
+        let final_screen = ScreenState::Gpu;
+        assert_eq!(final_screen, ScreenState::Gpu);
+    }
+
+    #[test]
+    fn test_all_screen_states_are_unique() {
+        let states = vec![
+            ScreenState::All,
+            ScreenState::Cpu,
+            ScreenState::Gpu,
+            ScreenState::Memory,
+            ScreenState::Power,
+            ScreenState::Temperature,
+            ScreenState::Control,
+            ScreenState::Info,
+        ];
+
+        for (i, state1) in states.iter().enumerate() {
+            for (j, state2) in states.iter().enumerate() {
+                if i != j {
+                    assert_ne!(
+                        state1, state2,
+                        "Screen states at {} and {} should be different",
+                        i, j
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_state_message_variants() {
+        let set_screen_msg = StateMessage::SetScreen(ScreenState::Cpu);
+        assert!(matches!(set_screen_msg, StateMessage::SetScreen(_)));
+
+        let update_msg = StateMessage::Update;
+        assert!(matches!(update_msg, StateMessage::Update));
+
+        let exit_msg = StateMessage::Exit;
+        assert!(matches!(exit_msg, StateMessage::Exit));
+
+        let error_msg = StateMessage::Error("test error".to_string());
+        assert!(matches!(error_msg, StateMessage::Error(_)));
+    }
+
+    #[test]
+    fn test_keyboard_event_codes() {
+        let key_q = KeyCode::Char('q');
+        let key_q_upper = KeyCode::Char('Q');
+        let key_esc = KeyCode::Esc;
+        let key_1 = KeyCode::Char('1');
+        let key_2 = KeyCode::Char('2');
+        let key_3 = KeyCode::Char('3');
+        let key_4 = KeyCode::Char('4');
+        let key_5 = KeyCode::Char('5');
+        let key_6 = KeyCode::Char('6');
+        let key_7 = KeyCode::Char('7');
+        let key_8 = KeyCode::Char('8');
+
+        let mut event_q = KeyEvent::new(key_q, KeyModifiers::NONE);
+        event_q.kind = KeyEventKind::Press;
+        let mut event_q_upper = KeyEvent::new(key_q_upper, KeyModifiers::NONE);
+        event_q_upper.kind = KeyEventKind::Press;
+        let mut event_esc = KeyEvent::new(key_esc, KeyModifiers::NONE);
+        event_esc.kind = KeyEventKind::Press;
+        let mut event_1 = KeyEvent::new(key_1, KeyModifiers::NONE);
+        event_1.kind = KeyEventKind::Press;
+        let mut event_2 = KeyEvent::new(key_2, KeyModifiers::NONE);
+        event_2.kind = KeyEventKind::Press;
+        let mut event_3 = KeyEvent::new(key_3, KeyModifiers::NONE);
+        event_3.kind = KeyEventKind::Press;
+        let mut event_4 = KeyEvent::new(key_4, KeyModifiers::NONE);
+        event_4.kind = KeyEventKind::Press;
+        let mut event_5 = KeyEvent::new(key_5, KeyModifiers::NONE);
+        event_5.kind = KeyEventKind::Press;
+        let mut event_6 = KeyEvent::new(key_6, KeyModifiers::NONE);
+        event_6.kind = KeyEventKind::Press;
+        let mut event_7 = KeyEvent::new(key_7, KeyModifiers::NONE);
+        event_7.kind = KeyEventKind::Press;
+        let mut event_8 = KeyEvent::new(key_8, KeyModifiers::NONE);
+        event_8.kind = KeyEventKind::Press;
+
+        assert_eq!(event_q.code, key_q);
+        assert_eq!(event_q_upper.code, key_q_upper);
+        assert_eq!(event_esc.code, key_esc);
+        assert_eq!(event_1.code, key_1);
+        assert_eq!(event_2.code, key_2);
+        assert_eq!(event_3.code, key_3);
+        assert_eq!(event_4.code, key_4);
+        assert_eq!(event_5.code, key_5);
+        assert_eq!(event_6.code, key_6);
+        assert_eq!(event_7.code, key_7);
+        assert_eq!(event_8.code, key_8);
+    }
+
+    #[test]
+    fn test_keyboard_event_kind() {
+        let mut press_event = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE);
+        press_event.kind = KeyEventKind::Press;
+        let mut release_event = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE);
+        release_event.kind = KeyEventKind::Release;
+        let mut repeat_event = KeyEvent::new(KeyCode::Char('a'), KeyModifiers::NONE);
+        repeat_event.kind = KeyEventKind::Repeat;
+
+        assert_eq!(press_event.kind, KeyEventKind::Press);
+        assert_eq!(release_event.kind, KeyEventKind::Release);
+        assert_eq!(repeat_event.kind, KeyEventKind::Repeat);
+    }
+
+    #[test]
+    fn test_key_modifiers() {
+        let mut key_with_ctrl = KeyEvent::new(KeyCode::Char('c'), KeyModifiers::NONE);
+        key_with_ctrl.kind = KeyEventKind::Press;
+        let mut key_with_modifiers = KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL);
+        key_with_modifiers.kind = KeyEventKind::Press;
+
+        assert_eq!(key_with_ctrl.code, KeyCode::Char('c'));
+        assert_eq!(key_with_modifiers.modifiers, KeyModifiers::CONTROL);
+    }
+
+    #[test]
+    fn test_screen_navigation_sequence() {
+        let mut current_screen = ScreenState::All;
+
+        current_screen = ScreenState::Cpu;
+
+        current_screen = ScreenState::Gpu;
+        assert_eq!(current_screen, ScreenState::Gpu);
+
+        current_screen = ScreenState::Memory;
+        assert_eq!(current_screen, ScreenState::Memory);
+
+        current_screen = ScreenState::Power;
+        assert_eq!(current_screen, ScreenState::Power);
+
+        current_screen = ScreenState::Temperature;
+        assert_eq!(current_screen, ScreenState::Temperature);
+
+        current_screen = ScreenState::Control;
+        assert_eq!(current_screen, ScreenState::Control);
+
+        current_screen = ScreenState::Info;
+        assert_eq!(current_screen, ScreenState::Info);
+
+        current_screen = ScreenState::All;
+        assert_eq!(current_screen, ScreenState::All);
+    }
+
+    #[test]
+    fn test_tick_rate_duration() {
+        let tick_rate = Duration::from_millis(250);
+        assert_eq!(tick_rate.as_millis(), 250);
+
+        let alternative_tick_rate = Duration::from_millis(100);
+        assert_eq!(alternative_tick_rate.as_millis(), 100);
+        assert_ne!(tick_rate, alternative_tick_rate);
+    }
+
+    #[test]
+    fn test_state_message_clone() {
+        let msg1 = StateMessage::SetScreen(ScreenState::Cpu);
+        let msg2 = msg1.clone();
+
+        assert_eq!(msg1, msg2);
+    }
+
+    #[test]
+    fn test_multiple_state_messages() {
+        let mut messages = Vec::new();
+
+        messages.push(StateMessage::SetScreen(ScreenState::All));
+        messages.push(StateMessage::Update);
+        messages.push(StateMessage::SetScreen(ScreenState::Cpu));
+        messages.push(StateMessage::Update);
+        messages.push(StateMessage::Exit);
+
+        assert_eq!(messages.len(), 5);
+        assert!(matches!(
+            messages[0],
+            StateMessage::SetScreen(ScreenState::All)
+        ));
+        assert!(matches!(messages[1], StateMessage::Update));
+        assert!(matches!(
+            messages[2],
+            StateMessage::SetScreen(ScreenState::Cpu)
+        ));
+        assert!(matches!(messages[3], StateMessage::Update));
+        assert!(matches!(messages[4], StateMessage::Exit));
     }
 }

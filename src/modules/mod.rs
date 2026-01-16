@@ -17,3 +17,16 @@ pub mod processes;
 pub mod temperature;
 
 pub use hardware::BoardInfo;
+
+#[cfg(feature = "tui")]
+pub use cpu::{CpuCore, CpuStats};
+#[cfg(feature = "tui")]
+pub use fan::FanStats;
+#[cfg(feature = "tui")]
+pub use gpu::GpuStats;
+#[cfg(feature = "tui")]
+pub use memory::MemoryStats;
+#[cfg(feature = "tui")]
+pub use power::{PowerRail, PowerStats};
+#[cfg(feature = "tui")]
+pub use temperature::{TemperatureStats, ThermalZone};

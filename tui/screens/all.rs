@@ -12,7 +12,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::{
+use super::{
     JetsonStats, SimpleBoardInfo, SimpleCpuStats, SimpleFanStats, SimpleGpuStats,
     SimpleMemoryStats, SimplePowerStats, SimpleTemperatureStats,
 };
@@ -31,7 +31,7 @@ impl AllScreen {
         self.stats = Some(stats);
     }
 
-    pub fn draw<B: Backend>(&mut self, f: &mut Frame<B>) {
+    pub fn draw(&mut self, f: &mut Frame) {
         if let Some(stats) = &self.stats {
             self.draw_content(f, stats);
         } else {
@@ -39,7 +39,7 @@ impl AllScreen {
         }
     }
 
-    fn draw_loading<B: Backend>(&self, f: &mut Frame<B>) {
+    fn draw_loading(&self, f: &mut Frame) {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
@@ -51,7 +51,7 @@ impl AllScreen {
         f.render_widget(paragraph, size);
     }
 
-    fn draw_content<B: Backend>(&self, f: &mut Frame<B>, stats: &JetsonStats) {
+    fn draw_content(&self, f: &mut Frame, stats: &JetsonStats) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -66,7 +66,7 @@ impl AllScreen {
         self.draw_footer(f, chunks[2]);
     }
 
-    fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_header(&self, f: &mut Frame, area: Rect) {
         let header = Paragraph::new(vec![Line::from(vec![
             Span::styled(
                 "rusted-jetsons",
@@ -81,7 +81,7 @@ impl AllScreen {
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &JetsonStats, area: Rect) {
+    fn draw_body(&self, f: &mut Frame, stats: &JetsonStats, area: Rect) {
         let body_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -100,7 +100,7 @@ impl AllScreen {
         self.draw_power(f, stats, body_chunks[4]);
     }
 
-    fn draw_cpu<B: Backend>(&self, f: &mut Frame<B>, stats: &JetsonStats, area: Rect) {
+    fn draw_cpu(&self, f: &mut Frame, stats: &JetsonStats, area: Rect) {
         let gauge = Gauge::default()
             .block(Block::default().borders(Borders::ALL).title("CPU Usage"))
             .gauge_style(Style::default().fg(Color::Green))
@@ -109,7 +109,7 @@ impl AllScreen {
         f.render_widget(gauge, area);
     }
 
-    fn draw_gpu<B: Backend>(&self, f: &mut Frame<B>, stats: &JetsonStats, area: Rect) {
+    fn draw_gpu(&self, f: &mut Frame, stats: &JetsonStats, area: Rect) {
         let gauge = Gauge::default()
             .block(Block::default().borders(Borders::ALL).title("GPU Usage"))
             .gauge_style(Style::default().fg(Color::Blue))
@@ -118,7 +118,7 @@ impl AllScreen {
         f.render_widget(gauge, area);
     }
 
-    fn draw_memory<B: Backend>(&self, f: &mut Frame<B>, stats: &JetsonStats, area: Rect) {
+    fn draw_memory(&self, f: &mut Frame, stats: &JetsonStats, area: Rect) {
         let ram_percent = if stats.memory.ram_total > 0 {
             (stats.memory.ram_used * 100 / stats.memory.ram_total) as u16
         } else {
@@ -137,7 +137,7 @@ impl AllScreen {
         f.render_widget(gauge, area);
     }
 
-    fn draw_temperature<B: Backend>(&self, f: &mut Frame<B>, stats: &JetsonStats, area: Rect) {
+    fn draw_temperature(&self, f: &mut Frame, stats: &JetsonStats, area: Rect) {
         let board_temp = 0.0; // TODO: Implement board temp reading
         let text = format!(
             "CPU: {:.1}°C | GPU: {:.1}°C | Board: {:.1}°C",
@@ -150,7 +150,7 @@ impl AllScreen {
         f.render_widget(paragraph, area);
     }
 
-    fn draw_power<B: Backend>(&self, f: &mut Frame<B>, stats: &JetsonStats, area: Rect) {
+    fn draw_power(&self, f: &mut Frame, stats: &JetsonStats, area: Rect) {
         let text = format!("Total: {:.2}W", stats.power.total);
 
         let paragraph = Paragraph::new(text.as_str())
@@ -163,7 +163,7 @@ impl AllScreen {
         f.render_widget(paragraph, area);
     }
 
-    fn draw_footer<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_footer(&self, f: &mut Frame, area: Rect) {
         let footer_text = "q: quit | 1-8: screens | h: help";
         let paragraph = Paragraph::new(footer_text)
             .block(Block::default().borders(Borders::ALL))

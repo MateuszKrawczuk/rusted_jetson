@@ -12,7 +12,12 @@ use ratatui::{
     Frame,
 };
 
-use crate::{power::PowerStats as FullPowerStats, SimplePowerStats};
+use crate::modules::PowerStats as FullPowerStats;
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SimplePowerStats {
+    pub total: f32,
+}
 
 /// Power screen - detailed power monitoring
 pub struct PowerScreen {
@@ -20,13 +25,13 @@ pub struct PowerScreen {
 }
 
 #[derive(Debug, Clone)]
-struct PowerScreenStats {
+pub struct PowerScreenStats {
     pub power: SimplePowerStats,
     pub rails: Vec<PowerRail>,
 }
 
 #[derive(Debug, Clone)]
-struct PowerRail {
+pub struct PowerRail {
     pub name: String,
     pub current: f32,
     pub voltage: f32,
@@ -42,7 +47,7 @@ impl PowerScreen {
         self.stats = Some(stats);
     }
 
-    pub fn draw<B: Backend>(&mut self, f: &mut Frame<B>) {
+    pub fn draw(&mut self, f: &mut Frame) {
         if let Some(stats) = &self.stats {
             self.draw_content(f, stats);
         } else {
@@ -50,7 +55,7 @@ impl PowerScreen {
         }
     }
 
-    fn draw_loading<B: Backend>(&self, f: &mut Frame<B>) {
+    fn draw_loading(&self, f: &mut Frame) {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
@@ -58,7 +63,7 @@ impl PowerScreen {
         f.render_widget(paragraph, size);
     }
 
-    fn draw_content<B: Backend>(&self, f: &mut Frame<B>, stats: &PowerScreenStats) {
+    fn draw_content(&self, f: &mut Frame, stats: &PowerScreenStats) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -73,7 +78,7 @@ impl PowerScreen {
         self.draw_footer(f, stats, chunks[2]);
     }
 
-    fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_header(&self, f: &mut Frame, area: Rect) {
         let header = Paragraph::new(vec![Line::from(vec![
             Span::styled(
                 "rusted-jetsons",
@@ -88,7 +93,7 @@ impl PowerScreen {
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &PowerScreenStats, area: Rect) {
+    fn draw_body(&self, f: &mut Frame, stats: &PowerScreenStats, area: Rect) {
         let body_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
@@ -101,7 +106,7 @@ impl PowerScreen {
         self.draw_power_rails(f, stats, body_chunks[1]);
     }
 
-    fn draw_total_power<B: Backend>(&self, f: &mut Frame<B>, stats: &PowerScreenStats, area: Rect) {
+    fn draw_total_power(&self, f: &mut Frame, stats: &PowerScreenStats, area: Rect) {
         let items = vec![
             ListItem::new(format!("Total: {:.2}W", stats.power.total)),
             ListItem::new(""),
@@ -116,7 +121,7 @@ impl PowerScreen {
         f.render_widget(list, area);
     }
 
-    fn draw_power_rails<B: Backend>(&self, f: &mut Frame<B>, stats: &PowerScreenStats, area: Rect) {
+    fn draw_power_rails(&self, f: &mut Frame, stats: &PowerScreenStats, area: Rect) {
         let items: Vec<ListItem> = stats
             .rails
             .iter()
@@ -136,7 +141,7 @@ impl PowerScreen {
         f.render_widget(list, area);
     }
 
-    fn draw_footer<B: Backend>(&self, f: &mut Frame<B>, stats: &PowerScreenStats, area: Rect) {
+    fn draw_footer(&self, f: &mut Frame, stats: &PowerScreenStats, area: Rect) {
         let footer_text = format!(
             "q: quit | 1-8: screens | h: help | Total: {:.2}W",
             stats.power.total

@@ -33,3 +33,9 @@ pub mod tui;
 pub use tui::TuiApp;
 
 pub use error::{Error, Result};
+
+#[cfg(feature = "tui")]
+pub use tui::screens::{
+    SimpleBoardInfo, SimpleCpuStats, SimpleFanStats, SimpleGpuStats, SimpleMemoryStats,
+    SimplePowerStats, SimpleTemperatureStats,
+};

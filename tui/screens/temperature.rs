@@ -49,15 +49,23 @@ impl TemperatureScreen {
         self.stats = Some(stats);
     }
 
-    pub fn draw<B: Backend>(&mut self, f: &mut Frame<B>) {
+    pub fn draw(&mut self, f: &mut Frame) {
         if let Some(stats) = &self.stats {
-            self.draw_content(f, stats);
+            let chunks = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Length(3), // Header
+                    Constraint::Min(0),    // Content
+                    Constraint::Length(3), // Footer
+                ])
+                .split(f.size());
+            self.draw_content(f, stats, chunks[1]);
         } else {
             self.draw_loading(f);
         }
     }
 
-    fn draw_loading<B: Backend>(&self, f: &mut Frame<B>) {
+    fn draw_loading(&self, f: &mut Frame) {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
@@ -65,12 +73,7 @@ impl TemperatureScreen {
         f.render_widget(paragraph, size);
     }
 
-    fn draw_content<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &TemperatureScreenStats,
-        area: Rect,
-    ) {
+    fn draw_content(&self, f: &mut Frame, stats: &TemperatureScreenStats, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -85,7 +88,7 @@ impl TemperatureScreen {
         self.draw_footer(f, stats, chunks[2]);
     }
 
-    fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_header(&self, f: &mut Frame, area: Rect) {
         let header = Paragraph::new(vec![Line::from(vec![
             Span::styled(
                 "rusted-jetsons",
@@ -100,7 +103,7 @@ impl TemperatureScreen {
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &TemperatureScreenStats, area: Rect) {
+    fn draw_body(&self, f: &mut Frame, stats: &TemperatureScreenStats, area: Rect) {
         let body_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
@@ -113,12 +116,7 @@ impl TemperatureScreen {
         self.draw_all_zones(f, stats, body_chunks[1]);
     }
 
-    fn draw_main_temps<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &TemperatureScreenStats,
-        area: Rect,
-    ) {
+    fn draw_main_temps(&self, f: &mut Frame, stats: &TemperatureScreenStats, area: Rect) {
         let items = vec![
             ListItem::new(format!("CPU: {:.1}°C", stats.temperature.cpu)),
             ListItem::new(format!("GPU: {:.1}°C", stats.temperature.gpu)),
@@ -138,7 +136,7 @@ impl TemperatureScreen {
         f.render_widget(list, area);
     }
 
-    fn draw_all_zones<B: Backend>(&self, f: &mut Frame<B>, stats: &TemperatureScreen, area: Rect) {
+    fn draw_all_zones(&self, f: &mut Frame, stats: &TemperatureScreenStats, area: Rect) {
         let items: Vec<ListItem> = stats
             .zones
             .iter()
@@ -162,12 +160,7 @@ impl TemperatureScreen {
         f.render_widget(list, area);
     }
 
-    fn draw_footer<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &TemperatureScreenStats,
-        area: Rect,
-    ) {
+    fn draw_footer(&self, f: &mut Frame, stats: &TemperatureScreenStats, area: Rect) {
         let footer_text = format!(
             "q: quit | 1-8: screens | h: help | CPU: {:.1}°C | GPU: {:.1}°C",
             stats.temperature.cpu, stats.temperature.gpu

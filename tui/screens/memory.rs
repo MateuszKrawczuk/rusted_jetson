@@ -16,13 +16,21 @@ use crate::modules::MemoryStats;
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct SimpleMemoryStats {
-    pub memory: MemoryStats,
+    pub ram_used: u64,
+    pub ram_total: u64,
+    pub swap_used: u64,
+    pub swap_total: u64,
+}
+
+/// Memory screen - detailed memory monitoring
+pub struct MemoryScreen {
+    stats: Option<MemoryScreenStats>,
 }
 
 #[derive(Debug, Clone)]
-struct MemoryScreenStats {
+pub struct MemoryScreenStats {
     pub memory: SimpleMemoryStats,
-    pub full_memory: FullMemoryStats,
+    pub full_memory: MemoryStats,
 }
 
 impl MemoryScreen {
@@ -34,7 +42,7 @@ impl MemoryScreen {
         self.stats = Some(stats);
     }
 
-    pub fn draw<B: Backend>(&mut self, f: &mut Frame<B>) {
+    pub fn draw(&mut self, f: &mut Frame) {
         if let Some(stats) = &self.stats {
             self.draw_content(f, stats);
         } else {
@@ -42,7 +50,7 @@ impl MemoryScreen {
         }
     }
 
-    fn draw_loading<B: Backend>(&self, f: &mut Frame<B>) {
+    fn draw_loading(&self, f: &mut Frame) {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
@@ -50,7 +58,7 @@ impl MemoryScreen {
         f.render_widget(paragraph, size);
     }
 
-    fn draw_content<B: Backend>(&self, f: &mut Frame<B>, stats: &MemoryScreenStats) {
+    fn draw_content(&self, f: &mut Frame, stats: &MemoryScreenStats) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -65,7 +73,7 @@ impl MemoryScreen {
         self.draw_footer(f, stats, chunks[2]);
     }
 
-    fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_header(&self, f: &mut Frame, area: Rect) {
         let header = Paragraph::new(vec![Line::from(vec![
             Span::styled(
                 "rusted-jetsons",
@@ -80,7 +88,7 @@ impl MemoryScreen {
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &MemoryScreenStats, area: Rect) {
+    fn draw_body(&self, f: &mut Frame, stats: &MemoryScreenStats, area: Rect) {
         let body_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
@@ -93,12 +101,7 @@ impl MemoryScreen {
         self.draw_memory_details(f, stats, body_chunks[1]);
     }
 
-    fn draw_memory_bars<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &MemoryScreenStats,
-        area: Rect,
-    ) {
+    fn draw_memory_bars(&self, f: &mut Frame, stats: &MemoryScreenStats, area: Rect) {
         let mem_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -157,12 +160,7 @@ impl MemoryScreen {
         }
     }
 
-    fn draw_memory_details<B: Backend>(
-        &self,
-        f: &mut Frame<B>,
-        stats: &MemoryScreenStats,
-        area: Rect,
-    ) {
+    fn draw_memory_details(&self, f: &mut Frame, stats: &MemoryScreenStats, area: Rect) {
         let items = vec![
             ListItem::new(format!(
                 "RAM: {} MB / {} MB",
@@ -205,7 +203,7 @@ impl MemoryScreen {
         f.render_widget(list, area);
     }
 
-    fn draw_footer<B: Backend>(&self, f: &mut Frame<B>, stats: &MemoryScreenStats, area: Rect) {
+    fn draw_footer(&self, f: &mut Frame, stats: &MemoryScreenStats, area: Rect) {
         let footer_text = "q: quit | 1-8: screens | h: help";
         let paragraph = Paragraph::new(footer_text)
             .block(Block::default().borders(Borders::ALL))

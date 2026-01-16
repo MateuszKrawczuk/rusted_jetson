@@ -18,6 +18,26 @@ pub use cpu::CpuScreen;
 pub use cpu_screen as cpu;
 pub use gpu::GpuScreen;
 pub use info::{InfoScreen, InfoStats};
+
 pub use memory::MemoryScreen;
 pub use power::PowerScreen;
 pub use temperature::TemperatureScreen;
+
+// Re-export Simple*Stats and ScreenStats from individual modules
+pub use cpu_screen::{CoreStats, CpuScreenStats, SimpleCpuStats, SimpleFanStats};
+pub use gpu::{GpuScreenStats, SimpleGpuStats};
+pub use info::SimpleBoardInfo;
+pub use memory::{MemoryScreenStats, SimpleMemoryStats};
+pub use power::{PowerRail, PowerScreenStats, SimplePowerStats};
+pub use temperature::{SimpleTemperatureStats, TemperatureScreenStats, ThermalZone};
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct JetsonStats {
+    pub cpu: SimpleCpuStats,
+    pub gpu: SimpleGpuStats,
+    pub memory: SimpleMemoryStats,
+    pub fan: SimpleFanStats,
+    pub temperature: SimpleTemperatureStats,
+    pub power: SimplePowerStats,
+    pub board: SimpleBoardInfo,
+}

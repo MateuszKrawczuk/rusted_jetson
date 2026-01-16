@@ -15,6 +15,14 @@ use ratatui::{
 use crate::{modules::GpuStats, modules::TemperatureStats};
 
 #[derive(Debug, Clone, serde::Serialize)]
+pub struct SimpleGpuStats {
+    pub usage: f32,
+    pub frequency: u32,
+}
+
+use super::SimpleTemperatureStats;
+
+#[derive(Debug, Clone)]
 pub struct GpuScreenStats {
     pub gpu: SimpleGpuStats,
     pub temperature: SimpleTemperatureStats,
@@ -22,29 +30,9 @@ pub struct GpuScreenStats {
     pub gpu_arch: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct SimpleGpuStats {
-    pub usage: f32,
-    pub frequency: u32,
-}
-
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct SimpleTemperatureStats {
-    pub cpu: f32,
-    pub gpu: f32,
-}
-
 /// GPU screen - detailed GPU monitoring
 pub struct GpuScreen {
     stats: Option<GpuScreenStats>,
-}
-
-#[derive(Debug, Clone)]
-struct GpuScreenStats {
-    pub gpu: SimpleGpuStats,
-    pub temperature: SimpleTemperatureStats,
-    pub gpu_name: String,
-    pub gpu_arch: String,
 }
 
 impl GpuScreen {
@@ -56,7 +44,7 @@ impl GpuScreen {
         self.stats = Some(stats);
     }
 
-    pub fn draw<B: Backend>(&mut self, f: &mut Frame<B>) {
+    pub fn draw(&mut self, f: &mut Frame) {
         if let Some(stats) = &self.stats {
             self.draw_content(f, stats);
         } else {
@@ -64,7 +52,7 @@ impl GpuScreen {
         }
     }
 
-    fn draw_loading<B: Backend>(&self, f: &mut Frame<B>) {
+    fn draw_loading(&self, f: &mut Frame) {
         let size = f.size();
         let paragraph = Paragraph::new("Loading...")
             .alignment(Alignment::Center)
@@ -72,7 +60,7 @@ impl GpuScreen {
         f.render_widget(paragraph, size);
     }
 
-    fn draw_content<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats) {
+    fn draw_content(&self, f: &mut Frame, stats: &GpuScreenStats) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -87,7 +75,7 @@ impl GpuScreen {
         self.draw_footer(f, stats, chunks[2]);
     }
 
-    fn draw_header<B: Backend>(&self, f: &mut Frame<B>, area: Rect) {
+    fn draw_header(&self, f: &mut Frame, area: Rect) {
         let header = Paragraph::new(vec![Line::from(vec![
             Span::styled(
                 "rusted-jetsons",
@@ -102,7 +90,7 @@ impl GpuScreen {
         f.render_widget(header, area);
     }
 
-    fn draw_body<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
+    fn draw_body(&self, f: &mut Frame, stats: &GpuScreenStats, area: Rect) {
         let body_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
@@ -115,7 +103,7 @@ impl GpuScreen {
         self.draw_usage_graph(f, stats, body_chunks[1]);
     }
 
-    fn draw_gpu_info<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
+    fn draw_gpu_info(&self, f: &mut Frame, stats: &GpuScreenStats, area: Rect) {
         let info_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -132,7 +120,7 @@ impl GpuScreen {
         self.draw_gpu_name(f, stats, info_chunks[3]);
     }
 
-    fn draw_usage_gauge<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
+    fn draw_usage_gauge(&self, f: &mut Frame, stats: &GpuScreenStats, area: Rect) {
         let gauge = Gauge::default()
             .block(Block::default().borders(Borders::ALL).title("GPU Usage"))
             .gauge_style(Style::default().fg(Color::Blue))
@@ -141,7 +129,7 @@ impl GpuScreen {
         f.render_widget(gauge, area);
     }
 
-    fn draw_details<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
+    fn draw_details(&self, f: &mut Frame, stats: &GpuScreenStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "GPU Details",
@@ -169,7 +157,7 @@ impl GpuScreen {
         f.render_widget(paragraph, area);
     }
 
-    fn draw_temperature<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
+    fn draw_temperature(&self, f: &mut Frame, stats: &GpuScreenStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "GPU Temperature",
@@ -189,7 +177,7 @@ impl GpuScreen {
         f.render_widget(paragraph, area);
     }
 
-    fn draw_gpu_name<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
+    fn draw_gpu_name(&self, f: &mut Frame, stats: &GpuScreenStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "GPU Information",
@@ -213,7 +201,7 @@ impl GpuScreen {
         f.render_widget(paragraph, area);
     }
 
-    fn draw_usage_graph<B: Backend>(&self, f: &mut Frame<B>, _stats: &GpuScreenStats, area: Rect) {
+    fn draw_usage_graph(&self, f: &mut Frame, _stats: &GpuScreenStats, area: Rect) {
         let text = vec![
             Line::from(Span::styled(
                 "GPU Usage History",
@@ -231,7 +219,7 @@ impl GpuScreen {
         f.render_widget(paragraph, area);
     }
 
-    fn draw_footer<B: Backend>(&self, f: &mut Frame<B>, stats: &GpuScreenStats, area: Rect) {
+    fn draw_footer(&self, f: &mut Frame, stats: &GpuScreenStats, area: Rect) {
         let footer_text = format!(
             "q: quit | 1-8: screens | h: help | GPU: {:.1}°C",
             stats.temperature.gpu
