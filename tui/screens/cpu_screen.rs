@@ -175,3 +175,42 @@ impl Default for CpuScreen {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cpu_screen_initialization() {
+        let screen = CpuScreen::new();
+        assert!(screen.stats.is_none());
+        assert_eq!(screen.selected_core, 0);
+    }
+
+    #[test]
+    fn test_cpu_screen_update() {
+        let mut screen = CpuScreen::new();
+        let test_stats = CpuScreenStats {
+            overall: SimpleCpuStats {
+                usage: 50.0,
+                frequency: 2000,
+            },
+            cores: vec![],
+            fan: SimpleFanStats { speed: 50 },
+            temperature: SimpleTemperatureStats {
+                cpu: 45.0,
+                gpu: 50.0,
+            },
+        };
+
+        screen.update(test_stats);
+        assert!(screen.stats.is_some());
+    }
+
+    #[test]
+    fn test_default() {
+        let screen = CpuScreen::default();
+        assert!(screen.stats.is_none());
+        assert_eq!(screen.selected_core, 0);
+    }
+}

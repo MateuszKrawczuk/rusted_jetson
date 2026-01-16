@@ -182,3 +182,38 @@ impl Default for ControlScreen {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_control_screen_initialization() {
+        let screen = ControlScreen::new();
+        assert!(screen.stats.is_none());
+        assert_eq!(screen.selected_item, 0);
+    }
+
+    #[test]
+    fn test_control_screen_update() {
+        let mut screen = ControlScreen::new();
+        let test_stats = ControlStats {
+            fan_speed: 50,
+            fan_mode: "Auto".to_string(),
+            jetson_clocks: false,
+            jetson_clocks_status: "inactive".to_string(),
+            nvpmodel_id: 0,
+            nvpmodel_name: "MAXN".to_string(),
+        };
+
+        screen.update(test_stats);
+        assert!(screen.stats.is_some());
+    }
+
+    #[test]
+    fn test_default() {
+        let screen = ControlScreen::default();
+        assert!(screen.stats.is_none());
+        assert_eq!(screen.selected_item, 0);
+    }
+}

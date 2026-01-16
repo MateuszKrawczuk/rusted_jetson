@@ -22,6 +22,52 @@ pub struct AllScreen {
     stats: Option<JetsonStats>,
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_all_screen_initialization() {
+        let screen = AllScreen::new();
+        assert!(screen.stats.is_none());
+    }
+
+    #[test]
+    fn test_all_screen_update() {
+        let mut screen = AllScreen::new();
+        let test_stats = JetsonStats {
+            cpu: SimpleCpuStats {
+                usage: 50.0,
+                frequency: 2000,
+            },
+            gpu: SimpleGpuStats {
+                usage: 60.0,
+                frequency: 1500,
+            },
+            memory: SimpleMemoryStats {
+                ram_used: 4096,
+                ram_total: 8192,
+                swap_used: 0,
+                swap_total: 8192,
+            },
+            fan: SimpleFanStats { speed: 50 },
+            temperature: SimpleTemperatureStats {
+                cpu: 45.0,
+                gpu: 50.0,
+            },
+            power: SimplePowerStats { total: 10.5 },
+            board: SimpleBoardInfo {
+                model: "Jetson Orin".to_string(),
+                jetpack: "6.0".to_string(),
+                l4t: "36.3".to_string(),
+            },
+        };
+
+        screen.update(test_stats);
+        assert!(screen.stats.is_some());
+    }
+}
+
 impl AllScreen {
     pub fn new() -> Self {
         Self { stats: None }

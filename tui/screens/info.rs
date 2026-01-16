@@ -194,3 +194,38 @@ impl Default for InfoScreen {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_info_screen_initialization() {
+        let screen = InfoScreen::new();
+        assert!(screen.stats.is_none());
+    }
+
+    #[test]
+    fn test_info_screen_update() {
+        let mut screen = InfoScreen::new();
+        let test_stats = InfoStats {
+            board: SimpleBoardInfo {
+                model: "Jetson Orin".to_string(),
+                jetpack: "6.0".to_string(),
+                l4t: "36.3".to_string(),
+            },
+            cpu_cores: 8,
+            cpu_governor: "schedutil".to_string(),
+            gpu_name: "NVIDIA Orin GPU".to_string(),
+        };
+
+        screen.update(test_stats);
+        assert!(screen.stats.is_some());
+    }
+
+    #[test]
+    fn test_default() {
+        let screen = InfoScreen::default();
+        assert!(screen.stats.is_none());
+    }
+}
