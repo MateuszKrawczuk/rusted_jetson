@@ -383,7 +383,7 @@ for zone in sorted(thermal_zones):
   - [x] Add error handling for jetson_clocks command failures
   - [x] Ensure jetson_clocks works on supported platforms
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Control Functionality' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 3: Control Functionality' (Protocol in workflow.md)
 
 ## Phase 4: TUI Implementation
 
