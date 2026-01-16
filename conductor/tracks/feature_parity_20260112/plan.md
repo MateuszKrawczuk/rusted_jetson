@@ -444,7 +444,7 @@ for zone in sorted(thermal_zones):
    - [x] Implement hardware info screen with board details
    - [x] Add navigation hints and help text
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: TUI Implementation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 4: TUI Implementation' (Protocol in workflow.md)
 
 ## Phase 5: CLI Implementation
 
