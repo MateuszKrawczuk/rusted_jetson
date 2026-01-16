@@ -79,19 +79,19 @@ fn read_ina3221_rail(iio_path: &Path) -> Option<PowerRail> {
         .map(|s| s.trim().to_string())?;
 
     // Read current (in uA)
-    let current_uA = read_sysfs_u32(iio_path, "in_current_raw").unwrap_or(0) as f32;
+    let current_u_a = read_sysfs_u32(iio_path, "in_current_raw").unwrap_or(0) as f32;
 
     // Read voltage (in uV)
-    let voltage_uV = read_sysfs_u32(iio_path, "in_voltage_raw").unwrap_or(0) as f32;
+    let voltage_u_v = read_sysfs_u32(iio_path, "in_voltage_raw").unwrap_or(0) as f32;
 
     // Read scaling factors
     let current_scale = read_sysfs_u32(iio_path, "in_current_scale").unwrap_or(1) as f32;
     let voltage_scale = read_sysfs_u32(iio_path, "in_voltage_scale").unwrap_or(1) as f32;
 
     // Calculate actual values
-    let current_mA = current_uA * current_scale / 1000.0; // Convert to mA
-    let voltage_mV = voltage_uV * voltage_scale / 1000.0; // Convert to mV
-    let power_mW = (current_mA * voltage_mV) / 1000.0; // Convert to mW
+    let current_m_a = current_u_a * current_scale / 1000.0; // Convert to mA
+    let voltage_m_v = voltage_u_v * voltage_scale / 1000.0; // Convert to mV
+    let power_m_w = (current_m_a * voltage_m_v) / 1000.0; // Convert to mW
 
     Some(PowerRail {
         name,
@@ -216,9 +216,9 @@ mod tests {
 
     #[test]
     fn test_power_calculation() {
-        let current_mA = 1500.0;
-        let voltage_mV = 5000.0;
-        let expected_power_mW = (current_mA * voltage_mV) / 1000.0;
+        let current_m_a = 1500.0;
+        let voltage_m_v = 5000.0;
+        let expected_power_m_w = (current_m_a * voltage_m_v) / 1000.0;
 
         let rail = PowerRail {
             name: "VDD_CPU".to_string(),

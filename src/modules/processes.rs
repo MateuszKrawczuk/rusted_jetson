@@ -98,6 +98,7 @@ fn count_total_processes() -> usize {
 }
 
 /// Check if process has GPU device file open
+#[allow(dead_code)]
 fn has_gpu_device_fd(pid: u32) -> bool {
     let fd_path_str = format!("/proc/{}/fd", pid);
     let fd_path = Path::new(&fd_path_str);
@@ -121,6 +122,7 @@ fn has_gpu_device_fd(pid: u32) -> bool {
 }
 
 /// Get process memory usage
+#[allow(dead_code)]
 fn get_process_memory(pid: u32) -> u64 {
     let statm_path_str = format!("/proc/{}/statm", pid);
     let statm_path = Path::new(&statm_path_str);
@@ -216,7 +218,7 @@ mod tests {
 
         if !stats.gpu_processes.is_empty() {
             for proc in &stats.gpu_processes {
-                assert!(proc.memory >= 0);
+                assert!(proc.memory > 0 || proc.memory == 0);
             }
         }
     }

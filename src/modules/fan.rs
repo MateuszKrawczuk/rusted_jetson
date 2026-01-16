@@ -545,7 +545,7 @@ mod tests {
 
         assert_eq!(fan_info.index, 0);
         assert!(fan_info.name.contains("cooling_device"));
-        assert!(fan_info.speed >= 0 && fan_info.speed <= 100);
+        assert!(fan_info.speed <= 100);
 
         let fan_info_2 = FanInfo {
             index: 10,

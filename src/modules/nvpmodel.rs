@@ -313,7 +313,7 @@ mod tests {
         let stats = NVPModelStats::get();
 
         for model in &stats.models {
-            assert!(model.id >= 0 && model.id <= 15, "Model ID should be 0-15");
+            assert!(model.id <= 15, "Model ID should be 0-15");
         }
     }
 

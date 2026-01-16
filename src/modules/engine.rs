@@ -71,7 +71,7 @@ fn read_engine_status(base_path: &Path, engine_name: &str) -> EngineStatus {
 }
 
 /// Read NVDEC engine status
-fn read_nvdec_status(base_path: &Path) -> EngineStatus {
+fn read_nvdec_status(_base_path: &Path) -> EngineStatus {
     let engine_name = "nvdec";
 
     let usage_path = Path::new("/sys/kernel/nvdec_usage");
@@ -90,7 +90,7 @@ fn read_nvdec_status(base_path: &Path) -> EngineStatus {
 }
 
 /// Read NVENC engine status
-fn read_nvenc_status(base_path: &Path) -> EngineStatus {
+fn read_nvenc_status(_base_path: &Path) -> EngineStatus {
     let engine_name = "nvenc";
 
     let usage_path = Path::new("/sys/kernel/nvenc_usage");
@@ -109,7 +109,7 @@ fn read_nvenc_status(base_path: &Path) -> EngineStatus {
 }
 
 /// Read NVJPG engine status
-fn read_nvjpg_status(base_path: &Path) -> EngineStatus {
+fn read_nvjpg_status(_base_path: &Path) -> EngineStatus {
     let engine_name = "nvjpg";
 
     let usage_path = Path::new("/sys/kernel/nvjpg_usage");

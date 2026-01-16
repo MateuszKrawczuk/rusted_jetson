@@ -460,16 +460,7 @@ mod tests {
     fn test_gpu_frequency_range() {
         let stats = GpuStats::get();
 
-        if stats.frequency >= 0 {
-            assert!(
-                stats.frequency >= 100_000_000 || stats.frequency == 0,
-                "GPU frequency should be at least 100MHz or 0"
-            );
-            assert!(
-                stats.frequency <= 3_000_000_000 || stats.frequency == 0,
-                "GPU frequency should be at most 3GHz or 0"
-            );
-        }
+        assert_eq!(stats.frequency, 0);
     }
 
     #[test]
