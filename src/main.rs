@@ -84,7 +84,6 @@ fn print_json_stats() -> anyhow::Result<()> {
     let stats = serde_json::json!({
         "hardware": {
             "model": board_info.model,
-            "architecture": board_info.architecture,
             "jetpack": board_info.jetpack,
             "l4t": board_info.l4t,
             "serial": board_info.serial,

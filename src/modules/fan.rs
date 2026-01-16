@@ -27,6 +27,17 @@ pub enum FanMode {
     Unknown,
 }
 
+impl std::fmt::Display for FanMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            FanMode::Automatic => write!(f, "Automatic"),
+            FanMode::Manual => write!(f, "Manual"),
+            FanMode::Off => write!(f, "Off"),
+            FanMode::Unknown => write!(f, "Unknown"),
+        }
+    }
+}
+
 /// Individual fan information
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct FanInfo {
