@@ -427,13 +427,13 @@ for zone in sorted(thermal_zones):
 
 ### Tasks
 
-- [ ] Task: Write tests for CLI argument parsing
-  - [ ] Write tests for --stats flag parsing
-  - [ ] Write tests for --export otlp flag parsing
-  - [ ] Write tests for --fan speed command parsing
-  - [ ] Write tests for --nvpmodel command parsing
-  - [ ] Write tests for --jetson-clocks flag parsing
-  - [ ] Write tests for --endpoint parameter parsing
+ - [x] Task: Write tests for CLI argument parsing
+   - [x] Write tests for --stats flag parsing
+   - [x] Write tests for --export otlp flag parsing
+   - [x] Write tests for --fan speed command parsing
+   - [x] Write tests for --nvpmodel command parsing
+   - [x] Write tests for --jetson-clocks flag parsing
+   - [x] Write tests for --endpoint parameter parsing
 
 - [ ] Task: Implement CLI argument parsing
   - [ ] Implement --stats flag for JSON output

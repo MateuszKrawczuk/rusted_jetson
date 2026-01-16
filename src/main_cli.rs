@@ -36,3 +36,21 @@ async fn main() -> anyhow::Result<()> {
     println!("rjtop TUI starting...");
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cli_default() {
+        let args: Vec<&str> = vec![];
+        let cli = Cli::try_parse_from(args);
+        assert!(cli.is_ok());
+        let cli = cli.unwrap();
+        assert_eq!(cli.stats, false);
+        assert_eq!(cli.export, None);
+        assert_eq!(cli.fan, None);
+        assert_eq!(cli.nvpmodel, None);
+        assert_eq!(cli.jetson_clocks, false);
+    }
+}
