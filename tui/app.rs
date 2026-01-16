@@ -12,6 +12,7 @@ use crossterm::{
         self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode, KeyEventKind,
     },
     execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{
     backend::{Backend, CrosstermBackend},
@@ -50,14 +51,16 @@ impl TuiApp {
     pub fn new() -> anyhow::Result<Self> {
         let (tx, rx) = mpsc::channel();
 
+        // Enable raw mode and alternate screen
+        enable_raw_mode()?;
+        execute!(io::stdout(), EnterAlternateScreen, DisableMouseCapture)?;
+        execute!(io::stdout(), crossterm::cursor::Hide)?;
+
         // Initialize terminal
         let stdout = io::stdout();
         let backend = CrosstermBackend::new(stdout);
         let mut terminal = Terminal::new(backend)?;
         terminal.clear()?;
-
-        // Enable raw mode and mouse capture
-        execute!(io::stdout(), EnableMouseCapture)?;
 
         Ok(Self {
             terminal,
@@ -80,6 +83,9 @@ impl TuiApp {
 
     pub fn run(&mut self) -> anyhow::Result<()> {
         let mut last_tick = Instant::now();
+
+        // Initial draw (loading screen)
+        self.draw()?;
 
         loop {
             // Handle state messages
@@ -400,9 +406,13 @@ impl TuiApp {
 
 impl Drop for TuiApp {
     fn drop(&mut self) {
-        // Restore terminal
-        let _ = execute!(io::stdout(), DisableMouseCapture,);
-        let _ = self.terminal.show_cursor();
+        let _ = disable_raw_mode();
+        let _ = execute!(
+            io::stdout(),
+            LeaveAlternateScreen,
+            DisableMouseCapture,
+            crossterm::cursor::Show
+        );
     }
 }
 
