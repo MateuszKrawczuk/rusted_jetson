@@ -444,7 +444,7 @@ for zone in sorted(thermal_zones):
    - [x] Implement hardware info screen with board details
    - [x] Add navigation hints and help text
 
-- [~] Task: Conductor - User Manual Verification 'Phase 4: TUI Implementation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: TUI Implementation' [7ed413a] (Protocol in workflow.md)
 
 ## Phase 5: CLI Implementation
 
@@ -458,7 +458,7 @@ for zone in sorted(thermal_zones):
    - [x] Write tests for --jetson-clocks flag parsing
    - [x] Write tests for --endpoint parameter parsing
 
-- [ ] Task: Implement CLI argument parsing
+- [~] Task: Implement CLI argument parsing (Protocol in workflow.md)
   - [ ] Implement --stats flag for JSON output
   - [ ] Implement --export otlp flag with endpoint parameter
   - [ ] Implement --fan speed command
