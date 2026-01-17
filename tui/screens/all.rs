@@ -171,11 +171,15 @@ impl AllScreen {
             0
         };
 
+        let (ram_used_val, ram_used_unit) =
+            crate::modules::memory::format_memory_bytes(stats.memory.ram_used);
+        let (ram_total_val, ram_total_unit) =
+            crate::modules::memory::format_memory_bytes(stats.memory.ram_total);
+
         let gauge = Gauge::default()
             .block(Block::default().borders(Borders::ALL).title(format!(
-                "Memory: {} MB / {} MB",
-                stats.memory.ram_used / 1024,
-                stats.memory.ram_total / 1024
+                "Memory: {:.1}{} / {:.1}{}",
+                ram_used_val, ram_used_unit, ram_total_val, ram_total_unit
             )))
             .gauge_style(Style::default().fg(Color::Yellow))
             .percent(ram_percent)

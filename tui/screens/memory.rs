@@ -118,14 +118,19 @@ impl MemoryScreen {
         } else {
             0
         };
+
+        let (ram_used_val, ram_used_unit) =
+            crate::modules::memory::format_memory_bytes(stats.memory.ram_used);
+        let (ram_total_val, ram_total_unit) =
+            crate::modules::memory::format_memory_bytes(stats.memory.ram_total);
+
         let ram_gauge = Gauge::default()
             .block(Block::default().borders(Borders::ALL).title("RAM"))
             .gauge_style(Style::default().fg(Color::Green))
             .percent(ram_percent)
             .label(format!(
-                "{}MB / {}MB",
-                stats.memory.ram_used / 1024,
-                stats.memory.ram_total / 1024
+                "{:.1}{} / {:.1}{}",
+                ram_used_val, ram_used_unit, ram_total_val, ram_total_unit
             ));
         f.render_widget(ram_gauge, mem_chunks[0]);
 
@@ -135,14 +140,19 @@ impl MemoryScreen {
         } else {
             0
         };
+
+        let (swap_used_val, swap_used_unit) =
+            crate::modules::memory::format_memory_bytes(stats.memory.swap_used);
+        let (swap_total_val, swap_total_unit) =
+            crate::modules::memory::format_memory_bytes(stats.memory.swap_total);
+
         let swap_gauge = Gauge::default()
             .block(Block::default().borders(Borders::ALL).title("SWAP"))
             .gauge_style(Style::default().fg(Color::Yellow))
             .percent(swap_percent)
             .label(format!(
-                "{}MB / {}MB",
-                stats.memory.swap_used / 1024,
-                stats.memory.swap_total / 1024
+                "{:.1}{} / {:.1}{}",
+                swap_used_val, swap_used_unit, swap_total_val, swap_total_unit
             ));
         f.render_widget(swap_gauge, mem_chunks[1]);
 
@@ -151,44 +161,66 @@ impl MemoryScreen {
         if iram_total > 0 {
             let iram_used = stats.full_memory.iram_used;
             let iram_percent = (iram_used * 100 / iram_total) as u16;
+
+            let (iram_used_val, iram_used_unit) =
+                crate::modules::memory::format_memory_bytes(iram_used);
+            let (iram_total_val, iram_total_unit) =
+                crate::modules::memory::format_memory_bytes(iram_total);
+
             let iram_gauge = Gauge::default()
                 .block(Block::default().borders(Borders::ALL).title("IRAM"))
                 .gauge_style(Style::default().fg(Color::Cyan))
                 .percent(iram_percent)
-                .label(format!("{}KB / {}KB", iram_used / 1024, iram_total / 1024));
+                .label(format!(
+                    "{:.1}{} / {:.1}{}",
+                    iram_used_val, iram_used_unit, iram_total_val, iram_total_unit
+                ));
             f.render_widget(iram_gauge, mem_chunks[2]);
         }
     }
 
     fn draw_memory_details(&self, f: &mut Frame, stats: &MemoryScreenStats, area: Rect) {
+        let (ram_used_val, ram_used_unit) =
+            crate::modules::memory::format_memory_bytes(stats.memory.ram_used);
+        let (ram_total_val, ram_total_unit) =
+            crate::modules::memory::format_memory_bytes(stats.memory.ram_total);
+        let (swap_used_val, swap_used_unit) =
+            crate::modules::memory::format_memory_bytes(stats.memory.swap_used);
+        let (swap_total_val, swap_total_unit) =
+            crate::modules::memory::format_memory_bytes(stats.memory.swap_total);
+        let (ram_cached_val, ram_cached_unit) =
+            crate::modules::memory::format_memory_bytes(stats.full_memory.ram_cached);
+        let (swap_cached_val, swap_cached_unit) =
+            crate::modules::memory::format_memory_bytes(stats.full_memory.swap_cached);
+        let (iram_used_val, iram_used_unit) =
+            crate::modules::memory::format_memory_bytes(stats.full_memory.iram_used);
+        let (iram_total_val, iram_total_unit) =
+            crate::modules::memory::format_memory_bytes(stats.full_memory.iram_total);
+        let (iram_lfb_val, iram_lfb_unit) =
+            crate::modules::memory::format_memory_bytes(stats.full_memory.iram_lfb);
+
         let items = vec![
             ListItem::new(format!(
-                "RAM: {} MB / {} MB",
-                stats.memory.ram_used / 1024,
-                stats.memory.ram_total / 1024
+                "RAM: {:.1}{} / {:.1}{}",
+                ram_used_val, ram_used_unit, ram_total_val, ram_total_unit
             )),
             ListItem::new(format!(
-                "SWAP: {} MB / {} MB",
-                stats.memory.swap_used / 1024,
-                stats.memory.swap_total / 1024
+                "SWAP: {:.1}{} / {:.1}{}",
+                swap_used_val, swap_used_unit, swap_total_val, swap_total_unit
             )),
             ListItem::new(format!(
-                "RAM Cached: {} MB",
-                stats.full_memory.ram_cached / 1024
+                "RAM Cached: {:.1}{}",
+                ram_cached_val, ram_cached_unit
             )),
             ListItem::new(format!(
-                "SWAP Cached: {} MB",
-                stats.full_memory.swap_cached / 1024
+                "SWAP Cached: {:.1}{}",
+                swap_cached_val, swap_cached_unit
             )),
             ListItem::new(format!(
-                "IRAM: {} KB / {} KB",
-                stats.full_memory.iram_used / 1024,
-                stats.full_memory.iram_total / 1024
+                "IRAM: {:.1}{} / {:.1}{}",
+                iram_used_val, iram_used_unit, iram_total_val, iram_total_unit
             )),
-            ListItem::new(format!(
-                "IRAM LFB: {} KB",
-                stats.full_memory.iram_lfb / 1024
-            )),
+            ListItem::new(format!("IRAM LFB: {:.1}{}", iram_lfb_val, iram_lfb_unit)),
         ];
 
         let list = List::new(items)

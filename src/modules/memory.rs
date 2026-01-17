@@ -20,6 +20,25 @@ pub struct MemoryStats {
     pub iram_lfb: u64,
 }
 
+/// Format memory bytes to MB or GB with appropriate unit
+///
+/// # Arguments
+/// * `bytes` - Memory value in bytes
+///
+/// # Returns
+/// Tuple of (value, unit) where unit is "MB" or "GB"
+pub fn format_memory_bytes(bytes: u64) -> (f64, &'static str) {
+    const GB_THRESHOLD: u64 = 17_179_869_184; // 16GB in bytes
+
+    if bytes >= GB_THRESHOLD {
+        let gb = bytes as f64 / 1_073_741_824.0; // 1024^3
+        (gb, "GB")
+    } else {
+        let mb = bytes as f64 / 1_048_576.0; // 1024^2
+        (mb, "MB")
+    }
+}
+
 impl MemoryStats {
     /// Get current memory statistics
     pub fn get() -> Self {
@@ -308,5 +327,76 @@ Cached:          not a number"#;
         }
 
         println!("\n=== Test Complete ===");
+    }
+
+    #[test]
+    fn test_format_memory_bytes_mb() {
+        let bytes = 1_048_576u64; // 1 MB in bytes
+        let (value, unit) = format_memory_bytes(bytes);
+
+        assert_eq!(unit, "MB", "Unit should be MB for values < 16GB");
+        assert!((value - 1.0).abs() < 0.01, "Value should be ~1.0 MB");
+    }
+
+    #[test]
+    fn test_format_memory_bytes_gb() {
+        let bytes = 17_179_869_184u64; // 16 GB in bytes (threshold)
+        let (value, unit) = format_memory_bytes(bytes);
+
+        assert_eq!(unit, "GB", "Unit should be GB for values >= 16GB");
+        assert!((value - 16.0).abs() < 0.01, "Value should be ~16.0 GB");
+    }
+
+    #[test]
+    fn test_format_memory_bytes_below_threshold() {
+        let bytes = 15_032_385_536u64; // 14 GB in bytes (below threshold)
+        let (value, unit) = format_memory_bytes(bytes);
+
+        assert_eq!(unit, "MB", "Unit should be MB for values < 16GB");
+        assert!((value - 14_336.0).abs() < 1.0, "Value should be ~14336 MB");
+    }
+
+    #[test]
+    fn test_format_memory_bytes_above_threshold() {
+        let bytes = 18_253_611_008u64; // 17 GB in bytes (above threshold)
+        let (value, unit) = format_memory_bytes(bytes);
+
+        assert_eq!(unit, "GB", "Unit should be GB for values >= 16GB");
+        assert!((value - 17.0).abs() < 0.01, "Value should be ~17.0 GB");
+    }
+
+    #[test]
+    fn test_format_memory_bytes_boundary() {
+        let bytes = 17_179_869_183u64; // Just below 16 GB threshold
+        let (value, unit) = format_memory_bytes(bytes);
+
+        assert_eq!(unit, "MB", "Unit should be MB for values < 16GB");
+    }
+
+    #[test]
+    fn test_format_memory_bytes_zero() {
+        let bytes = 0u64;
+        let (value, unit) = format_memory_bytes(bytes);
+
+        assert_eq!(unit, "MB", "Unit should be MB for zero");
+        assert_eq!(value, 0.0, "Value should be 0");
+    }
+
+    #[test]
+    fn test_format_memory_bytes_large_value() {
+        let bytes = 34_359_738_368u64; // 32 GB in bytes
+        let (value, unit) = format_memory_bytes(bytes);
+
+        assert_eq!(unit, "GB", "Unit should be GB for large values");
+        assert!((value - 32.0).abs() < 0.01, "Value should be ~32.0 GB");
+    }
+
+    #[test]
+    fn test_format_memory_bytes_iram() {
+        let bytes = 2_097_152u64; // 2 MB in bytes
+        let (value, unit) = format_memory_bytes(bytes);
+
+        assert_eq!(unit, "MB", "Unit should be MB for IRAM");
+        assert!((value - 2.0).abs() < 0.01, "Value should be ~2.0 MB");
     }
 }
