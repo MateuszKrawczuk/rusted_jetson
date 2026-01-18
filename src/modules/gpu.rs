@@ -85,6 +85,16 @@ impl GpuStats {
             stats.usage = read_gpu_usage(&devfreq_path);
         }
 
+        // Read GPU state from sysfs
+        stats.state = read_gpu_state_from_sysfs();
+
+        // Read GPU active functions from sysfs
+        stats.active_functions = read_gpu_active_functions_from_sysfs();
+
+        stats.temperature = read_gpu_temp();
+        stats
+    }
+
         // Try to read temperature
         stats.temperature = read_gpu_temp();
 
@@ -188,6 +198,66 @@ fn find_gpu_devfreq() -> Option<String> {
     }
 
     None
+}
+
+/// Read GPU state from sysfs
+fn read_gpu_state_from_sysfs() -> String {
+    // Try to read GPU state from /sys/class/nvrm/
+    // On Jetson devices, we can check if GPU is active by reading power state
+    let path = Path::new("/sys/class/nvrm/gpu0/power/runtime_status");
+    
+    if let Ok(content) = fs::read_to_string(&path) {
+        if content.trim() == "active" {
+            return "active".to_string();
+        } else if content.trim() == "suspended" {
+            return "idle".to_string();
+        }
+    }
+    
+    // Fallback: try to read from usage
+    let usage_path = Path::new("/sys/class/nvrm/gpu0/device/gpu_busy_percent");
+    if let Ok(usage) = fs::read_to_string(&usage_path) {
+        if usage.trim().parse::<u32>().unwrap_or(0) > 0 {
+            return "active".to_string();
+        }
+    }
+    
+    String::new()
+}
+
+/// Read GPU active functions from sysfs
+fn read_gpu_active_functions_from_sysfs() -> Vec<String> {
+    let mut functions = Vec::new();
+    
+    // Try to read CUDA usage
+    let cuda_usage_path = Path::new("/sys/class/nvrm/gpu0/device/gpu_busy_percent");
+    if let Ok(usage) = fs::read_to_string(&cuda_usage_path) {
+        if usage.trim().parse::<u32>().unwrap_or(0) > 0 {
+            functions.push("CUDA".to_string());
+        }
+    }
+    
+    // Try to read NVDEC usage from sysfs if available
+    let nvdec_path = Path::new("/sys/class/nvrm/gpu0/device/nvdec_usage");
+    if nvdec_path.exists() {
+        if let Ok(usage) = fs::read_to_string(&nvdec_path) {
+            if usage.trim().parse::<u32>().unwrap_or(0) > 0 {
+                functions.push("NVDEC".to_string());
+            }
+        }
+    }
+    
+    // Try to read NVENC usage from sysfs if available
+    let nvenc_path = Path::new("/sys/class/nvrm/gpu0/device/nvenc_usage");
+    if nvenc_path.exists() {
+        if let Ok(usage) = fs::read_to_string(&nvenc_path) {
+            if usage.trim().parse::<u32>().unwrap_or(0) > 0 {
+                functions.push("NVENC".to_string());
+            }
+        }
+    }
+    
+    functions
 }
 
 /// Read GPU frequency (in Hz)
@@ -542,7 +612,6 @@ mod tests {
     #[test]
     #[ignore = "Requires implementation - failing test for GPU memory reading"]
     #[test]
-    #[ignore = "Requires implementation - failing test for GPU memory reading"]
     fn test_read_gpu_memory() {
         let stats = GpuStats::get();
 
@@ -557,7 +626,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Requires implementation - failing test for GPU state reading"]
     fn test_read_gpu_state() {
         let stats = GpuStats::get();
 
@@ -576,7 +644,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "Requires implementation - failing test for GPU active functions"]
     fn test_read_gpu_active_functions() {
         let stats = GpuStats::get();
 
