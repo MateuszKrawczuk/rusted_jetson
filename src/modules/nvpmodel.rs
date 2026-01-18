@@ -32,7 +32,7 @@ impl NVPModelStats {
         }
 
         let mut stats = NVPModelStats::default();
-        stats.models = parse_nvpmodel_conf(&path);
+        stats.models = parse_nvpmodel_conf(path);
         stats.available = !stats.models.is_empty();
 
         // Try to get current model
@@ -67,7 +67,7 @@ impl NVPModelStats {
             return Vec::new();
         }
 
-        parse_nvpmodel_conf(&path)
+        parse_nvpmodel_conf(path)
     }
 }
 

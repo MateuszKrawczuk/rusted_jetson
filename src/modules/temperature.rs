@@ -35,8 +35,10 @@ impl TemperatureStats {
             return TemperatureStats::default();
         }
 
-        let mut stats = TemperatureStats::default();
-        stats.thermal_zones = read_thermal_zones(path);
+        let mut stats = TemperatureStats {
+            thermal_zones: read_thermal_zones(path),
+            ..Default::default()
+        };
 
         // Extract common temperatures (case-insensitive)
         for zone in &stats.thermal_zones {

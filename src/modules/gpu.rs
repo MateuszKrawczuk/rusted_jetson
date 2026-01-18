@@ -50,6 +50,21 @@ pub struct GpuProcess {
     pub command: String,
 }
 
+impl Default for GpuStats {
+    fn default() -> Self {
+        Self {
+            usage: 0.0,
+            frequency: 0,
+            temperature: 0.0,
+            governor: String::new(),
+            memory_used: 0,
+            memory_total: 0,
+            state: String::new(),
+            active_functions: Vec::new(),
+        }
+    }
+}
+
 impl GpuStats {
     /// Get current GPU statistics
     ///
@@ -66,8 +81,9 @@ impl GpuStats {
     ///
     /// For JetPack 7.0+ (Thor), uses NVML if available for more accurate statistics.
     pub fn get() -> Self {
-        let mut stats = GpuStats::default();
-
+        // Don't use mutable default() to avoid borrow issues
+        let mut temperature = 0.0;
+        
         #[cfg(feature = "nvml")]
         {
             // Check if we should use NVML (JetPack 7.0+)
@@ -79,20 +95,30 @@ impl GpuStats {
         }
 
         // Try to read from devfreq
+        let mut gpu_stats = GpuStats::default();
+        
         if let Some(devfreq_path) = find_gpu_devfreq() {
-            stats.frequency = read_gpu_freq(&devfreq_path);
-            stats.governor = read_gpu_governor(&devfreq_path);
-            stats.usage = read_gpu_usage(&devfreq_path);
+            gpu_stats.frequency = read_gpu_freq(&devfreq_path);
+            gpu_stats.governor = read_gpu_governor(&devfreq_path);
+            gpu_stats.usage = read_gpu_usage(&devfreq_path);
         }
-
+        
         // Read GPU state from sysfs
-        stats.state = read_gpu_state_from_sysfs();
+        gpu_stats.state = read_gpu_state_from_sysfs();
 
         // Read GPU active functions from sysfs
-        stats.active_functions = read_gpu_active_functions_from_sysfs();
+        gpu_stats.active_functions = read_gpu_active_functions_from_sysfs();
 
-        stats.temperature = read_gpu_temp();
-        stats
+        // Read GPU temperature
+        temperature = read_gpu_temp();
+        gpu_stats.temperature = temperature;
+        
+        // Read GPU memory from sysfs
+        let memory = read_gpu_memory_from_sysfs();
+        gpu_stats.memory_used = memory.used;
+        gpu_stats.memory_total = memory.total;
+        
+        gpu_stats
     }
 
         // Try to read temperature
@@ -393,7 +419,7 @@ pub fn parse_nvidia_smi_usage(output: &str) -> f32 {
 /// Falls back to 0.0 if nvidia-smi is not available.
 pub fn read_nvidia_smi_usage() -> anyhow::Result<f32> {
     let output = Command::new("nvidia-smi")
-        .args(&[
+        .args([
             "--query-gpu=utilization.gpu",
             "--format=csv,noheader,nounits",
         ])
@@ -480,7 +506,7 @@ pub fn parse_nvidia_smi_pmon(output: &str) -> Vec<GpuProcess> {
 /// Falls back to empty list if nvidia-smi is not available.
 pub fn read_nvidia_smi_pmon() -> anyhow::Result<Vec<GpuProcess>> {
     let output = Command::new("nvidia-smi")
-        .args(&["pmon", "-c", "1"])
+        .args(["pmon", "-c", "1"])
         .output()?;
 
     if !output.status.success() {

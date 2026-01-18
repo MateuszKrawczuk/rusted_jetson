@@ -25,7 +25,7 @@ impl JetsonClocksStats {
         let mut stats = JetsonClocksStats::default();
 
         // Try to read current mode
-        if let Some(mode) = read_jetson_clocks_mode(&path) {
+        if let Some(mode) = read_jetson_clocks_mode(path) {
             stats.enabled = !mode.contains("0");
             stats.mode = mode;
         }

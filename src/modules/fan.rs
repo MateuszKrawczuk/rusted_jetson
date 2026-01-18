@@ -56,8 +56,10 @@ impl FanStats {
             return FanStats::default();
         }
 
-        let mut stats = FanStats::default();
-        stats.fans = read_cooling_devices(path);
+        let mut stats = FanStats {
+            fans: read_cooling_devices(path),
+            ..Default::default()
+        };
 
         // Calculate overall speed and RPM
         if !stats.fans.is_empty() {

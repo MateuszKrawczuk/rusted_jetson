@@ -35,15 +35,14 @@ impl EngineStats {
             return EngineStats::default();
         }
 
-        let mut stats = EngineStats::default();
-        stats.ape = read_engine_status(path, "ape");
-        stats.dla0 = read_engine_status(path, "dla0");
-        stats.dla1 = read_engine_status(path, "dla1");
-        stats.nvdec = read_nvdec_status(path);
-        stats.nvenc = read_nvenc_status(path);
-        stats.nvjpg = read_nvjpg_status(path);
-
-        stats
+        EngineStats {
+            ape: read_engine_status(path, "ape"),
+            dla0: read_engine_status(path, "dla0"),
+            dla1: read_engine_status(path, "dla1"),
+            nvdec: read_nvdec_status(path),
+            nvenc: read_nvenc_status(path),
+            nvjpg: read_nvjpg_status(path),
+        }
     }
 }
 

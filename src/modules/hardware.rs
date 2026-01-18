@@ -345,9 +345,7 @@ fn parse_jetpack_from_comment(line: &str, current_jetpack: &str) -> String {
     if line.contains("JETPACK_VERSION=") {
         if let Some(start) = line.find("JETPACK_VERSION=") {
             let rest = &line[start + "JETPACK_VERSION=".len()..];
-            let end = rest
-                .find(|c: char| c == ',' || c == ' ' || c == '\n')
-                .unwrap_or(rest.len());
+            let end = rest.find([',', ' ', '\n']).unwrap_or(rest.len());
             return rest[..end].trim().to_string();
         }
     }

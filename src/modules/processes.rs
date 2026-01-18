@@ -107,7 +107,7 @@ fn has_gpu_device_fd(pid: u32) -> bool {
         return false;
     }
 
-    if let Ok(entries) = fs::read_dir(&fd_path) {
+    if let Ok(entries) = fs::read_dir(fd_path) {
         for entry in entries.flatten() {
             if let Ok(target) = fs::read_link(entry.path()) {
                 let target_str = target.to_string_lossy();
@@ -127,7 +127,7 @@ fn get_process_memory(pid: u32) -> u64 {
     let statm_path_str = format!("/proc/{}/statm", pid);
     let statm_path = Path::new(&statm_path_str);
 
-    if let Ok(content) = fs::read_to_string(&statm_path) {
+    if let Ok(content) = fs::read_to_string(statm_path) {
         let parts: Vec<&str> = content.split_whitespace().collect();
         if parts.len() >= 2 {
             return parts[1].parse().unwrap_or(0) * 4096; // Resident set size in bytes
