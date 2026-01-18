@@ -214,7 +214,7 @@ impl TuiApp {
 
         // Update GPU screen with detailed stats
         let full_gpu = gpu::GpuStats::get();
-        let gpu_screen_stats = crate::tui::screens::GpuScreenStats {
+        let gpu_screen_stats = crate::tui::screens::SimpleGpuStats {
             gpu: SimpleGpuStats {
                 usage: full_gpu.usage,
                 frequency: full_gpu.frequency,
@@ -225,6 +225,10 @@ impl TuiApp {
             },
             gpu_name: "NVIDIA GPU".to_string(),
             gpu_arch: "Unknown".to_string(),
+            memory_used: full_gpu.memory_used,
+            memory_total: full_gpu.memory_total,
+            state: full_gpu.state.clone(),
+            active_functions: full_gpu.active_functions.clone(),
         };
         self.gpu_screen.update(gpu_screen_stats);
 

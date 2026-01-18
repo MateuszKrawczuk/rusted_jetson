@@ -1,0 +1,8 @@
+{
+  "track_id": "bugfix_monitoring_display_20260116",
+  "type": "bug",
+  "status": "new",
+  "created_at": "2026-01-16T00:00:00Z",
+  "updated_at": "2026-01-16T00:00:00Z",
+  "description": "Fix critical bugs affecting monitoring data display accuracy across all Jetson platforms: power consumption display, memory unit formatting, CPU core information, and GPU information - all compared to jtop reference implementation"
+}

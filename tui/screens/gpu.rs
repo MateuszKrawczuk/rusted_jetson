@@ -13,6 +13,7 @@ use ratatui::{
 };
 
 use crate::{modules::GpuStats, modules::TemperatureStats};
+use crate::tui::screens::{SimpleGpuStats};
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct SimpleGpuStats {
@@ -20,7 +21,26 @@ pub struct SimpleGpuStats {
     pub frequency: u32,
 }
 
-use super::SimpleTemperatureStats;
+#[derive(Debug, Clone, serde::Serialize, Default)]
+pub struct GpuScreenStats {
+    pub gpu: SimpleGpuStats,
+    pub temperature: SimpleTemperatureStats,
+    pub gpu_name: String,
+    pub gpu_arch: String,
+    pub memory_used: u64,
+    pub memory_total: u64,
+    pub state: String,
+    pub active_functions: Vec<String>,
+}
+
+impl Default for SimpleGpuStats {
+    fn default() -> Self {
+        Self {
+            usage: 0.0,
+            frequency: 0,
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct GpuScreenStats {
@@ -28,6 +48,35 @@ pub struct GpuScreenStats {
     pub temperature: SimpleTemperatureStats,
     pub gpu_name: String,
     pub gpu_arch: String,
+    pub memory_used: u64,
+    pub memory_total: u64,
+    pub state: String,
+    pub active_functions: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct GpuScreen {
+    stats: Option<GpuScreenStats>,
+}
+impl Default for SimpleGpuStats {
+    fn default() -> Self {
+        Self {
+            usage: 0.0,
+            frequency: 0,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct GpuScreenStats {
+    pub gpu: SimpleGpuStats,
+    pub temperature: SimpleTemperatureStats,
+    pub gpu_name: String,
+    pub gpu_arch: String,
+    pub memory_used: u64,
+    pub memory_total: u64,
+    pub state: String,
+    pub active_functions: Vec<String>,
 }
 
 /// GPU screen - detailed GPU monitoring
@@ -129,27 +178,52 @@ impl GpuScreen {
         f.render_widget(gauge, area);
     }
 
-    fn draw_details(&self, f: &mut Frame, stats: &GpuScreenStats, area: Rect) {
+    fn draw_details(&self, f: &mut Frame, stats: &SimpleGpuStats, area: Rect) {
         let text = vec![
-            Line::from(Span::styled(
-                "GPU Details",
-                Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::BOLD),
-            )),
-            Line::from(""),
             Line::from(vec![
-                Span::styled("Name: ", Style::default().fg(Color::Cyan)),
-                Span::raw(stats.gpu_name.as_str()),
-            ]),
-            Line::from(vec![
-                Span::styled("Arch: ", Style::default().fg(Color::Cyan)),
-                Span::raw(stats.gpu_arch.as_str()),
-            ]),
-            Line::from(vec![
-                Span::styled("Freq: ", Style::default().fg(Color::Cyan)),
-                Span::raw(format!("{}MHz", stats.gpu.frequency / 1_000_000)),
-            ]),
+                Span::styled(
+                    "GPU Details",
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Line::from(""),
+                Line::from(vec![
+                    Span::styled("Name: ", Style::default().fg(Color::Cyan)),
+                    Span::raw(stats.gpu_name.as_str()),
+                ]),
+                Line::from(vec![
+                    Span::styled("Arch: ", Style::default().fg(Color::Cyan)),
+                    Span::raw(stats.gpu_arch.as_str()),
+                ]),
+                Line::from(vec![
+                    Span::styled("Freq: ", Style::default().fg(Color::Cyan)),
+                    Span::raw(format!("{} MHz", stats.gpu.frequency / 1_000_000)),
+                ]),
+                Line::from(vec![
+                    Span::styled("Governor: ", Style::default().fg(Color::Cyan)),
+                    Span::raw(stats.gpu.governor.as_str()),
+                ]),
+                Line::from(vec![
+                    Span::styled("State: ", Style::default().fg(Color::Cyan)),
+                    Span::raw(if stats.state.is_empty() { "N/A".to_string() } else { stats.state.clone() }),
+                ]),
+                Line::from(vec![
+                    Span::styled("Mem: ", Style::default().fg(Color::Cyan)),
+                    Span::raw(if stats.memory_total > 0 {
+                        format!("{} / {} MB", stats.memory_used / 1024 / 1024, stats.memory_total / 1024 / 1024)
+                    } else {
+                        "N/A".to_string()
+                    }),
+                ]),
+                Line::from(vec![
+                    Span::styled("Functions: ", Style::default().fg(Color::Cyan)),
+                    Span::raw(if stats.active_functions.is_empty() {
+                        "None".to_string()
+                    } else {
+                        stats.active_functions.join(", ")
+                    }),
+                ]),
         ];
 
         let paragraph =

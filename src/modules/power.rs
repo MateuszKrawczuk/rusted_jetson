@@ -33,7 +33,7 @@ impl PowerStats {
             return PowerStats::default();
         }
 
-        stats.rails = read_power_rails(&i2c_path);
+        stats.rails = read_power_rails(i2c_path);
 
         stats.total = stats.rails.iter().map(|r| r.power).sum::<f32>() / 1000.0;
 
@@ -67,10 +67,9 @@ fn read_power_rails(base_path: &Path) -> Vec<PowerRail> {
                 continue;
             }
 
-            let mut rail_num: usize = 0;
+            let rail_num: usize = 0;
             if let Some(rail) = read_ina3221_rail(&i2c_path, rail_num) {
                 rails.push(rail);
-                rail_num += 1;
             }
         }
     }
@@ -80,7 +79,7 @@ fn read_power_rails(base_path: &Path) -> Vec<PowerRail> {
 
 /// Read INA3221 power rail
 fn read_ina3221_rail(iio_path: &Path, rail_num: usize) -> Option<PowerRail> {
-    let label_path = iio_path.join(&format!("in{}_label", rail_num));
+    let label_path = iio_path.join(format!("in{}_label", rail_num));
     let rail_name = if let Ok(name) = fs::read_to_string(&label_path) {
         name.trim().to_string()
     } else {
@@ -450,7 +449,7 @@ mod tests {
 
     #[test]
     fn test_power_summation_with_multiple_rails() {
-        let stats = PowerStats {
+        let mut stats = PowerStats {
             total: 0.0,
             rails: vec![
                 PowerRail {

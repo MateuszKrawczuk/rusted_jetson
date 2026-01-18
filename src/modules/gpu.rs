@@ -50,21 +50,6 @@ pub struct GpuProcess {
     pub command: String,
 }
 
-impl Default for GpuStats {
-    fn default() -> Self {
-        Self {
-            usage: 0.0,
-            frequency: 0,
-            temperature: 0.0,
-            governor: String::new(),
-            memory_used: 0,
-            memory_total: 0,
-            state: String::new(),
-            active_functions: Vec::new(),
-        }
-    }
-}
-
 impl GpuStats {
     /// Get current GPU statistics
     ///
@@ -81,9 +66,6 @@ impl GpuStats {
     ///
     /// For JetPack 7.0+ (Thor), uses NVML if available for more accurate statistics.
     pub fn get() -> Self {
-        // Don't use mutable default() to avoid borrow issues
-        let mut temperature = 0.0;
-        
         #[cfg(feature = "nvml")]
         {
             // Check if we should use NVML (JetPack 7.0+)
@@ -96,13 +78,13 @@ impl GpuStats {
 
         // Try to read from devfreq
         let mut gpu_stats = GpuStats::default();
-        
+
         if let Some(devfreq_path) = find_gpu_devfreq() {
             gpu_stats.frequency = read_gpu_freq(&devfreq_path);
             gpu_stats.governor = read_gpu_governor(&devfreq_path);
             gpu_stats.usage = read_gpu_usage(&devfreq_path);
         }
-        
+
         // Read GPU state from sysfs
         gpu_stats.state = read_gpu_state_from_sysfs();
 
@@ -110,21 +92,14 @@ impl GpuStats {
         gpu_stats.active_functions = read_gpu_active_functions_from_sysfs();
 
         // Read GPU temperature
-        temperature = read_gpu_temp();
-        gpu_stats.temperature = temperature;
-        
+        gpu_stats.temperature = read_gpu_temp();
+
         // Read GPU memory from sysfs
         let memory = read_gpu_memory_from_sysfs();
         gpu_stats.memory_used = memory.used;
         gpu_stats.memory_total = memory.total;
-        
+
         gpu_stats
-    }
-
-        // Try to read temperature
-        stats.temperature = read_gpu_temp();
-
-        stats
     }
 }
 
@@ -231,58 +206,58 @@ fn read_gpu_state_from_sysfs() -> String {
     // Try to read GPU state from /sys/class/nvrm/
     // On Jetson devices, we can check if GPU is active by reading power state
     let path = Path::new("/sys/class/nvrm/gpu0/power/runtime_status");
-    
-    if let Ok(content) = fs::read_to_string(&path) {
+
+    if let Ok(content) = fs::read_to_string(path) {
         if content.trim() == "active" {
             return "active".to_string();
         } else if content.trim() == "suspended" {
             return "idle".to_string();
         }
     }
-    
+
     // Fallback: try to read from usage
     let usage_path = Path::new("/sys/class/nvrm/gpu0/device/gpu_busy_percent");
-    if let Ok(usage) = fs::read_to_string(&usage_path) {
+    if let Ok(usage) = fs::read_to_string(usage_path) {
         if usage.trim().parse::<u32>().unwrap_or(0) > 0 {
             return "active".to_string();
         }
     }
-    
+
     String::new()
 }
 
 /// Read GPU active functions from sysfs
 fn read_gpu_active_functions_from_sysfs() -> Vec<String> {
     let mut functions = Vec::new();
-    
+
     // Try to read CUDA usage
     let cuda_usage_path = Path::new("/sys/class/nvrm/gpu0/device/gpu_busy_percent");
-    if let Ok(usage) = fs::read_to_string(&cuda_usage_path) {
+    if let Ok(usage) = fs::read_to_string(cuda_usage_path) {
         if usage.trim().parse::<u32>().unwrap_or(0) > 0 {
             functions.push("CUDA".to_string());
         }
     }
-    
+
     // Try to read NVDEC usage from sysfs if available
     let nvdec_path = Path::new("/sys/class/nvrm/gpu0/device/nvdec_usage");
     if nvdec_path.exists() {
-        if let Ok(usage) = fs::read_to_string(&nvdec_path) {
+        if let Ok(usage) = fs::read_to_string(nvdec_path) {
             if usage.trim().parse::<u32>().unwrap_or(0) > 0 {
                 functions.push("NVDEC".to_string());
             }
         }
     }
-    
+
     // Try to read NVENC usage from sysfs if available
     let nvenc_path = Path::new("/sys/class/nvrm/gpu0/device/nvenc_usage");
     if nvenc_path.exists() {
-        if let Ok(usage) = fs::read_to_string(&nvenc_path) {
+        if let Ok(usage) = fs::read_to_string(nvenc_path) {
             if usage.trim().parse::<u32>().unwrap_or(0) > 0 {
                 functions.push("NVENC".to_string());
             }
         }
     }
-    
+
     functions
 }
 
@@ -356,6 +331,20 @@ pub fn read_gpu_max_freq(devfreq_path: &str) -> u32 {
         .ok()
         .and_then(|s| s.trim().parse().ok())
         .unwrap_or(0)
+}
+
+/// Read GPU memory from sysfs
+fn read_gpu_memory_from_sysfs() -> GpuMemoryInfo {
+    // GPU memory is not directly accessible on all Jetson platforms via sysfs
+    // On Xavier and older platforms, nvidia-smi is not available
+    // On newer platforms with nvidia-smi, memory is available via NVML
+    // For now, return zeros for sysfs-only platforms
+    GpuMemoryInfo { used: 0, total: 0 }
+}
+
+struct GpuMemoryInfo {
+    used: u64,
+    total: u64,
 }
 
 /// Read GPU temperature
