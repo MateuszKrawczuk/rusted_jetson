@@ -84,7 +84,7 @@
   - [x] Write tests for NVP model setting command
   - [x] Write tests for jetson_clocks toggling command
 
-- [ ] Task: Conductor - User Manual Verification 'Phase 6: CLI Implementation'
+- [~] Task: Conductor - User Manual Verification 'Phase 6: CLI Implementation'
 
 ## Phase 7: Testing & Validation on All Platforms
 ### Tasks
