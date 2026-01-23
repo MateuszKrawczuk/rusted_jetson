@@ -185,11 +185,11 @@
    - [x] Run cargo doc and ensure documentation builds
    - [ ] Verify no security vulnerabilities with cargo-audit (cargo-audit not installed)
 
-- [ ] Task: Fix TUI display issues found during testing [64d3e74]
+- [x] Task: Fix TUI display issues found during testing [35684dd]
    - [x] Fix Board Temperature display (35.0°C now matches jtop)
    - [x] Fix Power Consumption display (added hwmon fallback, Xavier has no sensors)
-   - [ ] Review CPU Usage calculation (~1.3% vs ~19-25% in jtop - may be average vs instantaneous)
-   - [ ] Implement dynamic MB/GB formatting for memory display (format_memory_bytes exists but TUI doesn't use it)
+   - [x] Review CPU Usage calculation - implemented delta-based calculation with CpuMonitor
+   - [x] Implement dynamic MB/GB formatting - changed threshold from 16GB to 1GB
    - [x] Fix CPU core count detection (now correctly shows 8 cores)
 
 - [ ] Task: Conductor - User Manual Verification 'Phase 7: Testing & Validation on All Platforms'
