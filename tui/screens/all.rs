@@ -54,6 +54,7 @@ mod tests {
             temperature: SimpleTemperatureStats {
                 cpu: 45.0,
                 gpu: 50.0,
+                board: 40.0,
             },
             power: SimplePowerStats { total: 10.5 },
             board: SimpleBoardInfo {

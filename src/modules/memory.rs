@@ -28,7 +28,8 @@ pub struct MemoryStats {
 /// # Returns
 /// Tuple of (value, unit) where unit is "MB" or "GB"
 pub fn format_memory_bytes(bytes: u64) -> (f64, &'static str) {
-    const GB_THRESHOLD: u64 = 17_179_869_184; // 16GB in bytes
+    // Threshold for GB display - 1GB matches jtop's behavior
+    const GB_THRESHOLD: u64 = 1_073_741_824; // 1GB in bytes
 
     if bytes >= GB_THRESHOLD {
         let gb = bytes as f64 / 1_073_741_824.0; // 1024^3
@@ -334,43 +335,43 @@ Cached:          not a number"#;
         let bytes = 1_048_576u64; // 1 MB in bytes
         let (value, unit) = format_memory_bytes(bytes);
 
-        assert_eq!(unit, "MB", "Unit should be MB for values < 16GB");
+        assert_eq!(unit, "MB", "Unit should be MB for values < 1GB");
         assert!((value - 1.0).abs() < 0.01, "Value should be ~1.0 MB");
     }
 
     #[test]
     fn test_format_memory_bytes_gb() {
-        let bytes = 17_179_869_184u64; // 16 GB in bytes (threshold)
+        let bytes = 1_073_741_824u64; // 1 GB in bytes (threshold)
         let (value, unit) = format_memory_bytes(bytes);
 
-        assert_eq!(unit, "GB", "Unit should be GB for values >= 16GB");
-        assert!((value - 16.0).abs() < 0.01, "Value should be ~16.0 GB");
+        assert_eq!(unit, "GB", "Unit should be GB for values >= 1GB");
+        assert!((value - 1.0).abs() < 0.01, "Value should be ~1.0 GB");
     }
 
     #[test]
     fn test_format_memory_bytes_below_threshold() {
-        let bytes = 15_032_385_536u64; // 14 GB in bytes (below threshold)
+        let bytes = 536_870_912u64; // 512 MB in bytes (below 1GB threshold)
         let (value, unit) = format_memory_bytes(bytes);
 
-        assert_eq!(unit, "MB", "Unit should be MB for values < 16GB");
-        assert!((value - 14_336.0).abs() < 1.0, "Value should be ~14336 MB");
+        assert_eq!(unit, "MB", "Unit should be MB for values < 1GB");
+        assert!((value - 512.0).abs() < 1.0, "Value should be ~512 MB");
     }
 
     #[test]
     fn test_format_memory_bytes_above_threshold() {
-        let bytes = 18_253_611_008u64; // 17 GB in bytes (above threshold)
+        let bytes = 15_032_385_536u64; // 14 GB in bytes (above 1GB threshold)
         let (value, unit) = format_memory_bytes(bytes);
 
-        assert_eq!(unit, "GB", "Unit should be GB for values >= 16GB");
-        assert!((value - 17.0).abs() < 0.01, "Value should be ~17.0 GB");
+        assert_eq!(unit, "GB", "Unit should be GB for values >= 1GB");
+        assert!((value - 14.0).abs() < 0.01, "Value should be ~14.0 GB");
     }
 
     #[test]
     fn test_format_memory_bytes_boundary() {
-        let bytes = 17_179_869_183u64; // Just below 16 GB threshold
+        let bytes = 1_073_741_823u64; // Just below 1 GB threshold
         let (value, unit) = format_memory_bytes(bytes);
 
-        assert_eq!(unit, "MB", "Unit should be MB for values < 16GB");
+        assert_eq!(unit, "MB", "Unit should be MB for values < 1GB");
     }
 
     #[test]

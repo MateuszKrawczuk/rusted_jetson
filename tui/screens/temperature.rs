@@ -18,6 +18,7 @@ use crate::modules::TemperatureStats;
 pub struct SimpleTemperatureStats {
     pub cpu: f32,
     pub gpu: f32,
+    pub board: f32,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]

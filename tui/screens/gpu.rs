@@ -36,7 +36,7 @@ impl Default for GpuScreenStats {
     fn default() -> Self {
         Self {
             gpu: SimpleGpuStats::default(),
-            temperature: crate::tui::screens::SimpleTemperatureStats { cpu: 0.0, gpu: 0.0 },
+            temperature: crate::tui::screens::SimpleTemperatureStats { cpu: 0.0, gpu: 0.0, board: 0.0 },
             gpu_name: "NVIDIA GPU".to_string(),
             gpu_arch: "Unknown".to_string(),
             memory_used: 0,

@@ -46,6 +46,7 @@ pub struct TuiApp {
     should_exit: bool,
     tick_rate: Duration,
     screen_changed: bool,
+    cpu_monitor: cpu::CpuMonitor,
 }
 
 impl TuiApp {
@@ -79,6 +80,7 @@ impl TuiApp {
             should_exit: false,
             tick_rate: Duration::from_millis(250),
             screen_changed: false,
+            cpu_monitor: cpu::CpuMonitor::new(),
         })
     }
 
@@ -151,8 +153,11 @@ impl TuiApp {
     }
 
     fn tick(&mut self) {
-        // Collect real stats from modules
-        let stats = self.collect_stats();
+        // Get CPU stats once using the monitor (for delta-based usage calculation)
+        let full_cpu = self.cpu_monitor.get_stats();
+
+        // Collect real stats from modules (passing cpu_stats to avoid double-reading)
+        let stats = self.collect_stats_with_cpu(full_cpu.clone());
         self.stats = Some(stats.clone());
 
         // Update all screens with current stats
@@ -171,7 +176,7 @@ impl TuiApp {
 
         // Update info screen with hardware info
         let cpu_cores = cpu::get_core_count();
-        let cpu_governor = cpu::CpuStats::get()
+        let cpu_governor = full_cpu
             .cores
             .first()
             .map(|c| c.governor.clone())
@@ -185,8 +190,7 @@ impl TuiApp {
         };
         self.info_screen.update(info_stats);
 
-        // Update CPU screen with detailed stats
-        let full_cpu = cpu::CpuStats::get();
+        // Update CPU screen with detailed stats (using full_cpu from cpu_monitor above)
         let cpu_screen_stats = crate::tui::screens::CpuScreenStats {
             overall: SimpleCpuStats {
                 usage: full_cpu.usage,
@@ -208,6 +212,7 @@ impl TuiApp {
             temperature: SimpleTemperatureStats {
                 cpu: temperature::TemperatureStats::get().cpu,
                 gpu: temperature::TemperatureStats::get().gpu,
+                board: temperature::TemperatureStats::get().board,
             },
         };
         self.cpu_screen.update(cpu_screen_stats);
@@ -222,6 +227,7 @@ impl TuiApp {
             temperature: SimpleTemperatureStats {
                 cpu: temperature::TemperatureStats::get().cpu,
                 gpu: full_gpu.temperature,
+                board: temperature::TemperatureStats::get().board,
             },
             gpu_name: "NVIDIA GPU".to_string(),
             gpu_arch: "Unknown".to_string(),
@@ -271,6 +277,7 @@ impl TuiApp {
             temperature: SimpleTemperatureStats {
                 cpu: full_temperature.cpu,
                 gpu: full_temperature.gpu,
+                board: full_temperature.board,
             },
             zones: full_temperature
                 .thermal_zones
@@ -291,14 +298,14 @@ impl TuiApp {
         self.temperature_screen.update(temp_screen_stats);
     }
 
-    fn collect_stats(&self) -> JetsonStats {
+    fn collect_stats_with_cpu(&self, cpu_stats: cpu::CpuStats) -> JetsonStats {
         // Collect stats from hardware modules
-        use crate::modules::{cpu, fan, gpu, hardware, memory, power, temperature};
+        use crate::modules::{fan, gpu, hardware, memory, power, temperature};
 
         JetsonStats {
             cpu: SimpleCpuStats {
-                usage: cpu::CpuStats::get().usage,
-                frequency: cpu::CpuStats::get()
+                usage: cpu_stats.usage,
+                frequency: cpu_stats
                     .cores
                     .first()
                     .map(|c| c.frequency)
@@ -325,6 +332,7 @@ impl TuiApp {
                 SimpleTemperatureStats {
                     cpu: temp.cpu,
                     gpu: temp.gpu,
+                    board: temp.board,
                 }
             },
             power: SimplePowerStats {

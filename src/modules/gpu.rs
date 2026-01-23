@@ -522,6 +522,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Requires Jetson hardware - GPU sysfs paths"]
     fn test_gpu_stats_structure() {
         let stats = GpuStats::get();
 
@@ -641,6 +642,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Requires Jetson hardware - GPU state from sysfs"]
     fn test_read_gpu_state() {
         let stats = GpuStats::get();
 

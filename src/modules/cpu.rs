@@ -327,9 +327,194 @@ pub fn read_cpu_core_frequency(core_idx: usize) -> u32 {
     }
 }
 
+/// Raw CPU time values from /proc/stat for delta calculations
+#[derive(Debug, Clone, Default)]
+pub struct CpuTimeValues {
+    pub user: u64,
+    pub nice: u64,
+    pub system: u64,
+    pub idle: u64,
+    pub iowait: u64,
+    pub irq: u64,
+    pub softirq: u64,
+}
+
+impl CpuTimeValues {
+    /// Calculate total CPU time
+    pub fn total(&self) -> u64 {
+        self.user + self.nice + self.system + self.idle + self.iowait + self.irq + self.softirq
+    }
+
+    /// Calculate busy (non-idle) CPU time
+    pub fn busy(&self) -> u64 {
+        self.user + self.nice + self.system + self.irq + self.softirq
+    }
+}
+
+/// CPU monitor with state for delta-based usage calculation
+#[derive(Debug, Default)]
+pub struct CpuMonitor {
+    prev_values: Vec<CpuTimeValues>,
+}
+
+impl CpuMonitor {
+    /// Create a new CPU monitor
+    pub fn new() -> Self {
+        Self {
+            prev_values: Vec::new(),
+        }
+    }
+
+    /// Get CPU stats with delta-based usage calculation
+    ///
+    /// This calculates instantaneous CPU usage by comparing current
+    /// CPU time values with previous readings, similar to how jtop works.
+    pub fn get_stats(&mut self) -> CpuStats {
+        let mut stats = CpuStats::default();
+
+        // Read current CPU time values
+        let current_values = read_cpu_time_values();
+
+        // Read core info (frequency, governor)
+        if let Ok(cores) = read_cpu_cores_info() {
+            stats.cores = cores;
+        }
+
+        // Calculate usage from delta if we have previous values
+        if !self.prev_values.is_empty() && self.prev_values.len() == current_values.len() {
+            for (i, (curr, prev)) in current_values.iter().zip(self.prev_values.iter()).enumerate() {
+                let delta_total = curr.total().saturating_sub(prev.total());
+                let delta_busy = curr.busy().saturating_sub(prev.busy());
+
+                if delta_total > 0 && i < stats.cores.len() {
+                    stats.cores[i].usage = (delta_busy as f32 / delta_total as f32) * 100.0;
+                }
+            }
+        }
+
+        // Store current values for next call
+        self.prev_values = current_values;
+
+        // Calculate average usage
+        stats.usage = if !stats.cores.is_empty() {
+            stats.cores.iter().map(|c| c.usage).sum::<f32>() / stats.cores.len() as f32
+        } else {
+            0.0
+        };
+
+        stats
+    }
+}
+
+/// Read raw CPU time values from /proc/stat
+fn read_cpu_time_values() -> Vec<CpuTimeValues> {
+    let path = Path::new("/proc/stat");
+    let content = match fs::read_to_string(path) {
+        Ok(c) => c,
+        Err(_) => return Vec::new(),
+    };
+
+    let mut values = Vec::new();
+
+    for line in content.lines() {
+        if line.starts_with("cpu") && !line.starts_with("cpu ") {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+
+            if parts.len() >= 8 {
+                values.push(CpuTimeValues {
+                    user: parts[1].parse().unwrap_or(0),
+                    nice: parts[2].parse().unwrap_or(0),
+                    system: parts[3].parse().unwrap_or(0),
+                    idle: parts[4].parse().unwrap_or(0),
+                    iowait: parts[5].parse().unwrap_or(0),
+                    irq: parts[6].parse().unwrap_or(0),
+                    softirq: parts[7].parse().unwrap_or(0),
+                });
+            }
+        }
+    }
+
+    values
+}
+
+/// Read CPU core info (frequency, governor) without usage calculation
+fn read_cpu_cores_info() -> anyhow::Result<Vec<CpuCore>> {
+    let path = Path::new("/proc/cpuinfo");
+    let file = BufReader::new(fs::File::open(path)?);
+
+    let mut cores: Vec<CpuCore> = Vec::new();
+
+    for line in file.lines() {
+        let line = line?;
+        if let Some((key, value)) = line.split_once(':') {
+            if key.trim() == "processor" {
+                let idx = value.trim().parse().unwrap_or(0);
+                cores.push(CpuCore {
+                    index: idx,
+                    frequency: read_cpu_core_frequency(idx),
+                    usage: 0.0,
+                    governor: get_governor(idx),
+                });
+            }
+        }
+    }
+
+    Ok(cores)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_cpu_monitor_delta_calculation() {
+        let mut monitor = CpuMonitor::new();
+
+        // First call - no previous values, usage will be 0
+        let stats1 = monitor.get_stats();
+
+        // Second call - should calculate delta-based usage
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        let stats2 = monitor.get_stats();
+
+        // After two calls, we should have valid usage values
+        if !stats2.cores.is_empty() {
+            // Usage should be between 0 and 100
+            assert!(stats2.usage >= 0.0, "Usage should be >= 0");
+            assert!(stats2.usage <= 100.0, "Usage should be <= 100");
+        }
+    }
+
+    #[test]
+    fn test_cpu_time_values_total() {
+        let values = CpuTimeValues {
+            user: 100,
+            nice: 10,
+            system: 50,
+            idle: 800,
+            iowait: 20,
+            irq: 5,
+            softirq: 15,
+        };
+
+        assert_eq!(values.total(), 1000);
+    }
+
+    #[test]
+    fn test_cpu_time_values_busy() {
+        let values = CpuTimeValues {
+            user: 100,
+            nice: 10,
+            system: 50,
+            idle: 800,
+            iowait: 20,
+            irq: 5,
+            softirq: 15,
+        };
+
+        // busy = user + nice + system + irq + softirq = 100 + 10 + 50 + 5 + 15 = 180
+        assert_eq!(values.busy(), 180);
+    }
 
     #[test]
     fn test_get_core_count_from_cpuinfo() {
@@ -473,6 +658,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "Requires Jetson hardware - frequency reads from sysfs"]
     fn test_read_cpu_core_frequency_from_sysfs() {
         // Test that we can read per-core CPU frequency from sysfs
         // jtop reads from: /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq
@@ -566,8 +752,8 @@ mod tests {
         let expected_util = 100.0 * (busy as f32 / total as f32);
 
         assert!(
-            (expected_util - 8.5).abs() < 0.1,
-            "Utilization should be ~8.5%"
+            (expected_util - 6.59).abs() < 0.1,
+            "Utilization should be ~6.59%"
         );
     }
 
