@@ -117,10 +117,30 @@
    - [x] Verify CLI --stats JSON output (CPU, GPU, memory, temperature, fan, power all working)
    - [x] Verify CLI control commands (--fan, --nvpmodel, --jetson-clocks with proper sudo errors)
    - [x] Verify CLI help text (--help displays all options with examples)
-   - [ ] Manual verification of Screen 1 (power, memory units) via TUI
+   - [x] Manual verification of Screen 1 (power, memory units) via TUI (asciinema method)
    - [ ] Manual verification of Screen 2 (CPU cores) via TUI
    - [ ] Manual verification of Screen 3 (GPU info) via TUI
-   - [ ] Compare with jtop display on Xavier
+   - [x] Compare with jtop display on Xavier (发现问题)
+
+   **Issues Found (需要修复):**
+   - ❌ Board Temperature: 0.0°C (应该 ~34°C, jtop显示 34.0°C)
+   - ❌ Power Consumption: -0.00W (应该 ~313mW, jtop显示 313mW)
+   - ⚠️ CPU Usage: 3.73% vs ~19-25% (可能是平均值，但差异较大)
+   - ⚠️ Memory units: rjtop始终使用MB，jtop使用 MB/G 动态格式
+
+   **Working Features:**
+   - ✅ TUI renders correctly and displays in terminal
+   - ✅ CPU Usage gauge works
+   - ✅ GPU Usage gauge works (0% correct)
+   - ✅ Memory display works (860MB/14.9GB)
+   - ✅ Temperature display for CPU and GPU works (35.5°C each)
+   - ✅ Header and footer display correctly
+   - ✅ Navigation hints shown (q: quit | 1-8: screens | h: help)
+
+   **TUI Capture Method:**
+   - asciinema works for TUI capture (TERM=xterm-256color required)
+   - Command: `TERM=xterm-256color timeout 1 asciinema rec -c './target/release/rjtop' --overwrite /tmp/rjtop.cast`
+
 
 - [ ] Task: Test on Thor (10.0.20.93) [UNAVAILABLE - Hardware not accessible]
   - [ ] Run unit tests on Thor [SKIPPED - Thor unavailable]
@@ -131,10 +151,10 @@
   - [ ] Compare with jtop display on Thor [SKIPPED - Thor unavailable]
 
 - [ ] Task: Test on other platforms (if available)
-  - [ ] Run tests on Orin, Nano, or TX series if accessible
-  - [ ] Manual verification on additional platforms
-  - [ ] Document platform-specific behavior differences
-  - [x] Note: Thor (tegra264) unavailable - only Xavier tested
+   - [ ] Run tests on Orin, Nano, or TX series if accessible
+   - [ ] Manual verification on additional platforms
+   - [ ] Document platform-specific behavior differences
+   - [x] Note: Thor (tegra264) unavailable - only Xavier tested
 
 - [x] Task: Run quality checks [a5f0a5e]
 - [x] Run cargo clippy and fix all warnings
@@ -144,7 +164,15 @@
    - [x] Run cargo doc and ensure documentation builds
    - [ ] Verify no security vulnerabilities with cargo-audit (cargo-audit not installed)
 
+- [ ] Task: Fix TUI display issues found during testing
+   - [ ] Fix Board Temperature display (currently 0.0°C, should read from thermal zones)
+   - [ ] Fix Power Consumption display (currently -0.00W, should read from INA3221 sensors)
+   - [ ] Review CPU Usage calculation (3.73% vs ~19-25% in jtop)
+   - [ ] Implement dynamic MB/GB formatting for memory display (matches jtop behavior)
+   - [ ] Verify TUI screen switching for Screens 2 and 3
+
 - [ ] Task: Conductor - User Manual Verification 'Phase 7: Testing & Validation on All Platforms'
+
 
 ## Phase 8: Documentation
 ### Tasks
