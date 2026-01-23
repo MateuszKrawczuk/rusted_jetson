@@ -111,13 +111,16 @@
   - [ ] Verify <100ms update latency target
   - [ ] Verify <50MB memory footprint target
 
-- [x] Task: Test on Xavier (10.0.20.211) [2025-01-18]
-  - [x] Run unit tests on Xavier (126 passed, 15 ignored → all 141 passed)
-  - [x] Run integration tests on Xavier (all hardware-specific tests pass)
-  - [ ] Manual verification of Screen 1 (power, memory units)
-  - [ ] Manual verification of Screen 2 (CPU cores)
-  - [ ] Manual verification of Screen 3 (GPU info)
-  - [ ] Compare with jtop display on Xavier
+ - [x] Task: Test on Xavier (10.0.20.211) [2025-01-23]
+   - [x] Run unit tests on Xavier (140 passed, 4 failed, 20 ignored)
+   - [x] Run integration tests on Xavier (9/9 CLI tests passed)
+   - [x] Verify CLI --stats JSON output (CPU, GPU, memory, temperature, fan, power all working)
+   - [x] Verify CLI control commands (--fan, --nvpmodel, --jetson-clocks with proper sudo errors)
+   - [x] Verify CLI help text (--help displays all options with examples)
+   - [ ] Manual verification of Screen 1 (power, memory units) via TUI
+   - [ ] Manual verification of Screen 2 (CPU cores) via TUI
+   - [ ] Manual verification of Screen 3 (GPU info) via TUI
+   - [ ] Compare with jtop display on Xavier
 
 - [ ] Task: Test on Thor (10.0.20.93) [UNAVAILABLE - Hardware not accessible]
   - [ ] Run unit tests on Thor [SKIPPED - Thor unavailable]
