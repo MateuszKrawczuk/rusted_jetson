@@ -34,6 +34,19 @@ pub use tui::TuiApp;
 
 pub use error::{Error, Result};
 
+pub use modules::{
+    cpu::{CpuCore, CpuStats},
+    fan::{FanInfo, FanMode, FanStats},
+    gpu::{GpuProcess, GpuStats},
+    hardware::detect_board,
+    hardware::BoardInfo,
+    jetson_clocks::JetsonClocksStats,
+    memory::MemoryStats,
+    nvpmodel::{NVPModel, NVPModelStats},
+    power::{PowerRail, PowerStats},
+    temperature::{TemperatureStats, ThermalZone},
+};
+
 #[cfg(feature = "tui")]
 pub use tui::screens::{
     SimpleBoardInfo, SimpleCpuStats, SimpleFanStats, SimpleGpuStats, SimpleMemoryStats,
