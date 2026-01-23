@@ -51,17 +51,31 @@ impl PowerStats {
             return stats;
         }
 
-        // Try to find power1 sensors
         if let Ok(entries) = fs::read_dir(&hwmon_path) {
             for entry in entries.flatten() {
                 let hwmon_dir = entry.path();
-                let name: String = hwmon_dir
+
+                // Check if this is an INA3221 sensor
+                let name_path = hwmon_dir.join("name");
+                if let Ok(name) = fs::read_to_string(&name_path) {
+                    if name.trim() == "ina3221" {
+                        // Read INA3221 power rails (channels 1-3)
+                        for channel in 1..=3 {
+                            if let Some(rail) = read_ina3221_hwmon_rail(&hwmon_dir, channel) {
+                                stats.rails.push(rail);
+                            }
+                        }
+                        continue;
+                    }
+                }
+
+                // Fallback: Look for power1_input or power1_average
+                let hwmon_name: String = hwmon_dir
                     .file_name()
                     .and_then(|s| s.to_str())
                     .unwrap_or("unknown")
                     .to_string();
 
-                // Look for power1_input or power1_average
                 let power_input = hwmon_dir.join("power1_input");
                 let power_average = hwmon_dir.join("power1_average");
 
@@ -77,7 +91,7 @@ impl PowerStats {
 
                 if power_value > 0.0 {
                     stats.rails.push(PowerRail {
-                        name,
+                        name: hwmon_name,
                         current: power_value,
                         voltage: 0.0,
                         power: power_value,
@@ -86,9 +100,57 @@ impl PowerStats {
             }
         }
 
-        stats.total = stats.rails.iter().map(|r| r.power).sum::<f32>();
+        stats.total = stats.rails.iter().map(|r| r.power).sum::<f32>(); // power is already in W
         stats
     }
+}
+
+/// Read INA3221 power rail from hwmon path
+/// Channel 1-3 corresponds to the three channels of INA3221
+fn read_ina3221_hwmon_rail(hwmon_path: &Path, channel: usize) -> Option<PowerRail> {
+    // Read rail label (e.g., "VDD_IN", "VDD_CPU_GPU_CV", etc.)
+    let label_path = hwmon_path.join(format!("in{}_label", channel));
+    let rail_name = if let Ok(label) = fs::read_to_string(&label_path) {
+        let name = label.trim().to_string();
+        // Skip NC (Not Connected) rails on Orin family
+        if name == "NC" {
+            return None;
+        }
+        name
+    } else {
+        format!("rail{}", channel)
+    };
+
+    // Read current in microamps (uA) - curr{n}_input
+    let curr_path = hwmon_path.join(format!("curr{}_input", channel));
+    let current_ua = read_sysfs_i32(&curr_path).unwrap_or(0) as f32;
+
+    // Read voltage in millivolts (mV) - in{n}_input
+    let volt_path = hwmon_path.join(format!("in{}_input", channel));
+    let voltage_mv = read_sysfs_i32(&volt_path).unwrap_or(0) as f32;
+
+    // Calculate power: P = V * I
+    // voltage_mv * current_ua / 1_000_000_000 = power in W
+    let power_w = (voltage_mv * current_ua) / 1_000_000_000.0;
+
+    // Only return rail if we got valid readings
+    if power_w > 0.0 || (voltage_mv > 0.0 && current_ua >= 0.0) {
+        Some(PowerRail {
+            name: rail_name,
+            current: current_ua / 1000.0,  // uA to mA
+            voltage: voltage_mv,            // mV
+            power: power_w,                 // W
+        })
+    } else {
+        None
+    }
+}
+
+/// Read a signed i32 value from sysfs (for sensors that can have negative values)
+fn read_sysfs_i32(path: &Path) -> Option<i32> {
+    fs::read_to_string(path)
+        .ok()
+        .and_then(|s| s.trim().parse().ok())
 }
 
 /// Read a u32 value from sysfs
