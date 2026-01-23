@@ -137,8 +137,9 @@
   - [x] Note: Thor (tegra264) unavailable - only Xavier tested
 
 - [x] Task: Run quality checks [a5f0a5e]
-  - [x] Run cargo clippy and fix all warnings
-  - [ ] Run cargo fmt and ensure consistent formatting
+- [x] Run cargo clippy and fix all warnings
+   - [x] Run cargo test on Xavier (140 passed, 4 failed, 20 ignored)
+   - [ ] Run cargo fmt and ensure consistent formatting
   - [ ] Run cargo test and ensure all tests pass
   - [ ] Run cargo doc and ensure documentation builds
   - [ ] Verify no security vulnerabilities with cargo-audit
