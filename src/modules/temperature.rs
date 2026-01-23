@@ -53,7 +53,10 @@ impl TemperatureStats {
                 stats.gpu = zone.current_temp;
             } else if name_lower.contains("pmic") {
                 stats.pmic = zone.current_temp;
-            } else if name_lower.contains("board") || zone.name.contains("Tboard") {
+            } else if name_lower.contains("board")
+                || name_lower.contains("tboard")
+                || zone.name.contains("Tboard")
+            {
                 stats.board = zone.current_temp;
             }
         }

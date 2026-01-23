@@ -188,7 +188,7 @@ impl AllScreen {
     }
 
     fn draw_temperature(&self, f: &mut Frame, stats: &JetsonStats, area: Rect) {
-        let board_temp = 0.0; // TODO: Implement board temp reading
+        let board_temp = stats.temperature.board;
         let text = format!(
             "CPU: {:.1}°C | GPU: {:.1}°C | Board: {:.1}°C",
             stats.temperature.cpu, stats.temperature.gpu, board_temp

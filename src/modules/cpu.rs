@@ -122,9 +122,10 @@ pub async fn get_core_count_async() -> usize {
 fn read_cpu_cores() -> anyhow::Result<Vec<CpuCore>> {
     let path = Path::new("/proc/cpuinfo");
     let file = BufReader::new(fs::File::open(path)?);
-
+    
     let mut cores: Vec<CpuCore> = Vec::new();
-
+    
+    // First, read all CPU cores from /proc/cpuinfo
     for line in file.lines() {
         let line = line?;
         if let Some((key, value)) = line.split_once(':') {
@@ -139,14 +140,14 @@ fn read_cpu_cores() -> anyhow::Result<Vec<CpuCore>> {
             }
         }
     }
-
-    // Calculate CPU usage from /proc/stat
+    
+    // Calculate CPU usage from /proc/stat (after cores are created)
     if let Ok(usage_vec) = read_cpu_usage(&cores) {
         for (core, usage) in cores.iter_mut().zip(usage_vec.iter()) {
             core.usage = *usage;
         }
     }
-
+    
     Ok(cores)
 }
 
@@ -185,18 +186,27 @@ async fn read_cpu_cores_async() -> anyhow::Result<Vec<CpuCore>> {
 fn read_cpu_usage(cores: &[CpuCore]) -> anyhow::Result<Vec<f32>> {
     let path = Path::new("/proc/stat");
     let content = fs::read_to_string(path)?;
-
-    let mut usage = vec![0.0; cores.len()];
-
+    
+    // Count CPU cores from /proc/stat first
+    let cpu_count = content.lines()
+        .filter(|line| {
+            line.starts_with("cpu") && 
+            !line.starts_with("cpu ") && 
+            line.split_whitespace().next().map_or(false, |s| s.len() > 3 && s[3..].parse::<usize>().is_ok())
+        })
+        .count();
+    
+    let mut usage = vec![0.0; cpu_count];
+    
     for line in content.lines() {
         if line.starts_with("cpu") {
             let parts: Vec<&str> = line.split_whitespace().collect();
-
+            
             // Skip "cpu" (aggregate) line
             if parts[0] == "cpu" {
                 continue;
             }
-
+            
             // Extract core index
             if let Some(idx_str) = parts[0].strip_prefix("cpu") {
                 if let Ok(idx) = idx_str.parse::<usize>() {
@@ -207,7 +217,7 @@ fn read_cpu_usage(cores: &[CpuCore]) -> anyhow::Result<Vec<f32>> {
                             let nice: u64 = parts[2].parse().unwrap_or(0);
                             let system: u64 = parts[3].parse().unwrap_or(0);
                             let idle: u64 = parts[4].parse().unwrap_or(0);
-
+                            
                             let total = user + nice + system + idle;
                             if total > 0 {
                                 usage[idx] = ((user + nice + system) as f32 / total as f32) * 100.0;
@@ -218,7 +228,7 @@ fn read_cpu_usage(cores: &[CpuCore]) -> anyhow::Result<Vec<f32>> {
             }
         }
     }
-
+    
     Ok(usage)
 }
 
@@ -226,18 +236,27 @@ fn read_cpu_usage(cores: &[CpuCore]) -> anyhow::Result<Vec<f32>> {
 async fn read_cpu_usage_async(cores: &[CpuCore]) -> anyhow::Result<Vec<f32>> {
     let path = Path::new("/proc/stat");
     let content = tokio_fs::read_to_string(path).await?;
-
-    let mut usage = vec![0.0; cores.len()];
-
+    
+    // Count CPU cores from /proc/stat first
+    let cpu_count = content.lines()
+        .filter(|line| {
+            line.starts_with("cpu") && 
+            !line.starts_with("cpu ") && 
+            line.split_whitespace().next().map_or(false, |s| s.len() > 3 && s[3..].parse::<usize>().is_ok())
+        })
+        .count();
+    
+    let mut usage = vec![0.0; cpu_count];
+    
     for line in content.lines() {
         if line.starts_with("cpu") {
             let parts: Vec<&str> = line.split_whitespace().collect();
-
+            
             // Skip "cpu" (aggregate) line
             if parts[0] == "cpu" {
                 continue;
             }
-
+            
             // Extract core index
             if let Some(idx_str) = parts[0].strip_prefix("cpu") {
                 if let Ok(idx) = idx_str.parse::<usize>() {
@@ -248,7 +267,7 @@ async fn read_cpu_usage_async(cores: &[CpuCore]) -> anyhow::Result<Vec<f32>> {
                             let nice: u64 = parts[2].parse().unwrap_or(0);
                             let system: u64 = parts[3].parse().unwrap_or(0);
                             let idle: u64 = parts[4].parse().unwrap_or(0);
-
+                            
                             let total = user + nice + system + idle;
                             if total > 0 {
                                 usage[idx] = ((user + nice + system) as f32 / total as f32) * 100.0;
@@ -259,7 +278,7 @@ async fn read_cpu_usage_async(cores: &[CpuCore]) -> anyhow::Result<Vec<f32>> {
             }
         }
     }
-
+    
     Ok(usage)
 }
 

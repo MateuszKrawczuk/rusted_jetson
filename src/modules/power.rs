@@ -29,23 +29,71 @@ impl PowerStats {
 
         let i2c_path = Path::new("/sys/bus/i2c/devices");
 
-        if !i2c_path.exists() {
-            return PowerStats::default();
+        if i2c_path.exists() {
+            stats.rails = read_power_rails(i2c_path);
+            stats.total = stats.rails.iter().map(|r| r.power).sum::<f32>() / 1000.0;
         }
 
-        stats.rails = read_power_rails(i2c_path);
+        // Fallback to hwmon if INA3221 sensors not available
+        if stats.rails.is_empty() || stats.total <= 0.0 {
+            stats = Self::read_hwmon_power();
+        }
 
-        stats.total = stats.rails.iter().map(|r| r.power).sum::<f32>() / 1000.0;
+        stats
+    }
 
+    /// Read power from hwmon system (fallback method)
+    fn read_hwmon_power() -> Self {
+        let mut stats = PowerStats::default();
+        let hwmon_path = Path::new("/sys/class/hwmon");
+
+        if !hwmon_path.exists() {
+            return stats;
+        }
+
+        // Try to find power1 sensors
+        if let Ok(entries) = fs::read_dir(&hwmon_path) {
+            for entry in entries.flatten() {
+                let hwmon_dir = entry.path();
+                let name: String = hwmon_dir
+                    .file_name()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+
+                // Look for power1_input or power1_average
+                let power_input = hwmon_dir.join("power1_input");
+                let power_average = hwmon_dir.join("power1_average");
+
+                let power_value = if power_input.exists() {
+                    read_sysfs_u32(&power_input).unwrap_or(0) as f32 / 1000000.0
+                // uW to W
+                } else if power_average.exists() {
+                    read_sysfs_u32(&power_average).unwrap_or(0) as f32 / 1000000.0
+                // uW to W
+                } else {
+                    continue;
+                };
+
+                if power_value > 0.0 {
+                    stats.rails.push(PowerRail {
+                        name,
+                        current: power_value,
+                        voltage: 0.0,
+                        power: power_value,
+                    });
+                }
+            }
+        }
+
+        stats.total = stats.rails.iter().map(|r| r.power).sum::<f32>();
         stats
     }
 }
 
 /// Read a u32 value from sysfs
-fn read_sysfs_u32(path: &Path, file: &str) -> Option<u32> {
-    let file_path = path.join(file);
-
-    fs::read_to_string(file_path)
+fn read_sysfs_u32(path: &Path) -> Option<u32> {
+    fs::read_to_string(path)
         .ok()
         .and_then(|s| s.trim().parse().ok())
 }
@@ -100,9 +148,9 @@ fn read_ina3221_rail(iio_path: &Path, rail_num: usize) -> Option<PowerRail> {
     }
 
     let current_u_a =
-        read_sysfs_u32(iio_path, &format!("curr{}_input", rail_num)).unwrap_or(0) as f32;
+        read_sysfs_u32(&iio_path.join(format!("curr{}_input", rail_num))).unwrap_or(0) as f32;
     let voltage_u_v =
-        read_sysfs_u32(iio_path, &format!("in{}_input", rail_num)).unwrap_or(0) as f32;
+        read_sysfs_u32(&iio_path.join(format!("in{}_input", rail_num))).unwrap_or(0) as f32;
     let power_m_w = current_u_a * voltage_u_v / 1000000.0;
 
     Some(PowerRail {
