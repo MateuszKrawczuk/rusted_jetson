@@ -76,7 +76,10 @@ fn parse_export_type(s: &str) -> Result<String, String> {
     if s_lower == "otlp" {
         Ok(s_lower)
     } else {
-        Err(format!("Invalid export type '{}'. Supported types: otlp", s))
+        Err(format!(
+            "Invalid export type '{}'. Supported types: otlp",
+            s
+        ))
     }
 }
 
@@ -158,14 +161,16 @@ fn main() -> Result<()> {
 
     if let Some(export_type) = cli.export {
         if export_type == "otlp" {
-            let endpoint = cli.endpoint.unwrap_or_else(|| "http://localhost:4318".to_string());
+            let endpoint = cli
+                .endpoint
+                .unwrap_or_else(|| "http://localhost:4318".to_string());
             println!("Exporting to OTLP endpoint: {}", endpoint);
-            
+
             #[cfg(feature = "telemetry")]
             {
                 let stats = SystemStats::new();
                 let exporter = rusted_jetsons::TelemetryExporter::new(endpoint);
-                
+
                 tokio::runtime::Runtime::new()?.block_on(async {
                     match exporter.export(&stats).await {
                         Ok(()) => println!("Successfully exported to OTLP endpoint"),
@@ -176,7 +181,7 @@ fn main() -> Result<()> {
                     }
                 });
             }
-            
+
             #[cfg(not(feature = "telemetry"))]
             {
                 eprintln!("Error: OTLP export requires 'telemetry' feature to be enabled.");
@@ -190,6 +195,6 @@ fn main() -> Result<()> {
     println!("rjtop CLI - Fast Rust-based monitoring for NVIDIA Jetson devices");
     println!("\nUsage: rjtop-cli [OPTIONS]");
     println!("\nRun 'rjtop-cli --help' for more information.");
-    
+
     Ok(())
 }
