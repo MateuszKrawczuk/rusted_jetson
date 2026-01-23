@@ -20,8 +20,8 @@ use ratatui::{
 };
 
 use crate::tui::screens::{
-    AllScreen, ControlScreen, CpuScreen, GpuScreen, InfoScreen, JetsonStats, MemoryScreen,
-    PowerScreen, SimpleBoardInfo, SimpleCpuStats, SimpleFanStats, SimpleGpuStats,
+    AllScreen, ControlScreen, CpuScreen, GpuScreen, GpuScreenStats, InfoScreen, JetsonStats,
+    MemoryScreen, PowerScreen, SimpleBoardInfo, SimpleCpuStats, SimpleFanStats, SimpleGpuStats,
     SimpleMemoryStats, SimplePowerStats, SimpleTemperatureStats, TemperatureScreen,
 };
 use crate::tui::state::{ScreenState, StateMessage};
@@ -214,7 +214,7 @@ impl TuiApp {
 
         // Update GPU screen with detailed stats
         let full_gpu = gpu::GpuStats::get();
-        let gpu_screen_stats = crate::tui::screens::SimpleGpuStats {
+        let gpu_screen_stats = crate::tui::screens::GpuScreenStats {
             gpu: SimpleGpuStats {
                 usage: full_gpu.usage,
                 frequency: full_gpu.frequency,
@@ -228,6 +228,7 @@ impl TuiApp {
             memory_used: full_gpu.memory_used,
             memory_total: full_gpu.memory_total,
             state: full_gpu.state.clone(),
+            governor: full_gpu.governor.clone(),
             active_functions: full_gpu.active_functions.clone(),
         };
         self.gpu_screen.update(gpu_screen_stats);
